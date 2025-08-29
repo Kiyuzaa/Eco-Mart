@@ -17,10 +17,14 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $orders = $user->orders()->latest()->get();
-
-        // Ganti 'profile' menjadi 'profile.profile' untuk menunjuk ke subfolder
-        return view('profile.profile', compact('user', 'orders'));
+        
+        // Mengambil semua data yang relevan dengan pengguna
+        // Eager load 'product' untuk efisiensi
+        $wishlistItems = $user->wishlists()->with('product')->get();
+        $orders = $user->orders()->latest()->paginate(5); // Menggunakan paginasi untuk pesanan
+        $testimonials = $user->testimonials()->latest()->get();
+        
+        return view('profile.profile', compact('user', 'orders', 'wishlistItems', 'testimonials'));
     }
 
     public function edit()

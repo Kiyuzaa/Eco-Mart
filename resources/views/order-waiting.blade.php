@@ -4,9 +4,13 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Pesanan Diproses — EcoMart</title>
-  @vite(['resources/css/app.css','resources/js/app.js'])
+  {{-- Mengganti @vite dengan CDN Tailwind CSS --}}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: Figtree, system-ui, Segoe UI, Roboto, Helvetica, Arial; }
+  </style>
 </head>
-<body class="bg-gray-50" style="font-family:Figtree,system-ui,Segoe UI,Roboto,Helvetica,Arial">
+<body class="bg-gray-50">
   <x-navbar />
   <x-checkout-steps current="order" />
 
@@ -30,7 +34,8 @@
 
       <div class="mt-6 flex gap-3 justify-center">
         <a href="{{ route('home') }}" class="px-5 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white">Kembali ke Beranda</a>
-        <a href="{{ url('/account/orders') }}" class="px-5 py-2.5 rounded-lg border text-gray-700">Riwayat Pesanan</a>
+        {{-- Memperbaiki link ke halaman profil --}}
+        <a href="{{ route('profile') }}" class="px-5 py-2.5 rounded-lg border text-gray-700">Riwayat Pesanan</a>
       </div>
     </div>
   </div>
