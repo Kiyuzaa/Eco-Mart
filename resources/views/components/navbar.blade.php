@@ -99,6 +99,18 @@
       </button>
     </div>
 
+        <div class="flex items-center gap-3">
+    {{-- Link admin khusus admin --}}
+    @auth
+      @if(auth()->user()->isAdmin())
+        <a href="{{ route('admin.dashboard') }}"
+           class="px-3 py-2 bg-indigo-600 text-white rounded">
+           Admin Panel
+        </a>
+      @endif
+    @endauth
+    
+
     {{-- Menu items --}}
     <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-search">
       <ul class="flex flex-col p-4 md:p-0 mt-4 font-medium border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white">

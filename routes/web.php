@@ -10,6 +10,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\Admin\AdminProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +48,21 @@ Route::middleware('auth')->group(function () {
     })->name('order.success');
 });
 
+Route::middleware(['auth','role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/', [AdminProductController::class, 'index'])->name('dashboard');
+
+        // products
+        Route::get('/products',                    [AdminProductController::class, 'index'])->name('products.index');
+        Route::post('/products',                   [AdminProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}/edit',     [AdminProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}',          [AdminProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}',       [AdminProductController::class, 'destroy'])->name('products.destroy');
+    });
+
 // Halaman Produk & Kategori (Publik)
 Route::get('/product', [ProductController::class, 'index'])->name('product.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
@@ -70,4 +86,6 @@ Route::post('/wishlist/bulk-add-to-cart', [WishlistController::class, 'bulkAddTo
 Route::view('/ai-bot', 'ai-bot')->name('ai.bot');
 Route::get('/chat', [AiChatController::class, 'index'])->name('chat.index');
 Route::post('/chat', [AiChatController::class, 'send'])->name('chat.send');
+
+
 

@@ -65,7 +65,7 @@
             <section>
                 <div style="border-radius:10px;overflow:hidden;border:1px solid #E5E7EB;background:#fff;height:320px;display:flex;align-items:center;justify-content:center;">
                     @if(!empty($products) && isset($products[0]['image']))
-                        <img src="{{ $products[0]['image'] }}" alt="hero product mockup" style="width:100%;height:100%;object-fit:cover;object-position:center"/>
+                        <img src="{{ asset('storage/'.$products[0]['image']) }}" alt="hero product mockup" style="width:100%;height:100%;object-fit:cover;object-position:center"/>
                     @else
                         <img src="https://images.unsplash.com/photo-1542444459-db3d6f1e6e9f?q=80&w=1200&auto=format&fit=crop" alt="hero product mockup" style="width:100%;height:100%;object-fit:cover;object-position:center"/>
                     @endif
