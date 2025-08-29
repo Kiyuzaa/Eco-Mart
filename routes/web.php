@@ -33,6 +33,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
+    
+    Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])
+        ->name('wishlist.toggle');
+
     // Checkout
     // PERBAIKAN: Mengubah 'index' menjadi 'show' agar sesuai dengan controller
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout'); 

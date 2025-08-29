@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ $product->name ?? $product->title ?? 'Product Detail' }} — EcoMart</title>
 
+  {{-- CSRF untuk AJAX --}}
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+
   @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
       @vite(['resources/css/app.css','resources/js/app.js'])
   @else
@@ -27,10 +30,10 @@
 </head>
 <body class="bg-white text-slate-900">
 
-  {{-- NAVBAR via component --}}
+  {{-- NAVBAR --}}
   <x-navbar />
 
-  {{-- ===== GUARDS / FALLBACKS (anti-undefined) ===== --}}
+  {{-- ===== GUARDS / FALLBACKS ===== --}}
   @php
     // Images
     $images = isset($images) ? collect($images) : collect();
@@ -49,10 +52,13 @@
     // Reviews
     $reviews = isset($reviews) ? collect($reviews) : collect();
 
-    // Compare price (harga coret)
+    // Compare price
     if (!isset($compare_at)) {
         $compare_at = data_get($product, 'compare_at_price') ?? data_get($product, 'old_price');
     }
+
+    // Apakah produk ini sudah ada di wishlist user yang login?
+    $inWishlist = auth()->check() ? auth()->user()->hasInWishlist($product->id) : false;
   @endphp
 
   {{-- MAIN --}}
@@ -130,7 +136,7 @@
           </div>
         </div>
 
-        {{-- ADD TO CART --}}
+        {{-- ADD TO CART + WISHLIST --}}
         <form class="mt-5" method="POST" action="{{ route('cart.store') }}">
           @csrf
           <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -150,12 +156,18 @@
               Add to Cart
             </button>
 
+            {{-- Tombol Wishlist (UI sama; hanya diberi data-atribut) --}}
             <button type="button" title="Add to Wishlist"
-                    onclick="toggleWish()"
-                    class="h-11 aspect-square rounded-lg border flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    class="h-11 aspect-square rounded-lg border flex items-center justify-center"
+                    data-wishlist-button
+                    data-product-id="{{ $product->id }}"
+                    data-url="{{ route('wishlist.toggle', $product->id) }}"
+                    aria-pressed="{{ $inWishlist ? 'true' : 'false' }}">
+              <svg class="w-5 h-5 {{ $inWishlist ? 'text-red-500' : 'text-gray-600' }}"
+                   fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
+                   stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                      d="M21 8.25c0-2.486-2.014-4.5-4.5-4.5-1.86 0-3.45 1.102-4.125 2.684A4.5 4.5 0 006 3.75 4.5 4.5 0 001.5 8.25c0 7.125 9 12 9 12s9-4.875 9-12z" />
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
               </svg>
             </button>
           </div>
@@ -259,7 +271,7 @@
     </section>
   </main>
 
-  {{-- FOOTER via component --}}
+  {{-- FOOTER --}}
   <x-footer />
 
   <script>
@@ -318,8 +330,65 @@
       });
     });
 
-    // Wishlist dummy
-    function toggleWish(){ alert('Added to wishlist (demo). Hubungkan ke route wishlist-mu.'); }
+    // ===== Wishlist toggle (tanpa ubah UI) =====
+    document.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-wishlist-button]');
+      if (!btn) return;
+
+      e.preventDefault();
+
+      const url   = btn.dataset.url;
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (!res.ok) { console.error('Wishlist toggle failed', res.status); return; }
+
+        const data  = await res.json();
+        const added = data?.state === 'added';
+
+        // update ikon pada tombol ini
+        const svg = btn.querySelector('svg');
+        if (svg) {
+          svg.classList.toggle('text-red-500', added);
+          svg.classList.toggle('text-gray-600', !added);
+          svg.setAttribute('fill', added ? 'currentColor' : 'none');
+        }
+        btn.setAttribute('aria-pressed', added ? 'true' : 'false');
+
+        // update navbar (opsional: hanya jika id ada)
+        const favHeart = document.getElementById('nav-fav-heart');   // svg hati di navbar
+        const wlBadge  = document.getElementById('wishlist-badge');  // badge angka wishlist
+        const wlCount  = Number(data?.wishlist_count ?? 0);
+        const hasAny   = wlCount > 0;
+
+        if (favHeart) {
+          favHeart.classList.toggle('text-red-600', hasAny);
+          favHeart.classList.toggle('text-gray-500', !hasAny);
+          favHeart.setAttribute('fill', hasAny ? 'currentColor' : 'none');
+        }
+        if (wlBadge) {
+          wlBadge.textContent = wlCount;
+          wlBadge.classList.toggle('hidden', !hasAny);
+        }
+
+        // jika badge cart adalah total gabungan
+        const cartBadge = document.getElementById('cart-badge');
+        if (cartBadge && typeof data?.badge_total === 'number') {
+          cartBadge.textContent = data.badge_total;
+          cartBadge.dataset.wishlistCount = String(wlCount);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
   </script>
 </body>
 </html>

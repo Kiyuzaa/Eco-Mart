@@ -12,105 +12,73 @@ use App\Models\CartItem;
 
 class WishlistController extends Controller
 {
-    /** Ikuti pola guest seperti CartController (atau ganti ke middleware auth) */
     protected function currentUser(): User
     {
-        $user = Auth::user();
-        if ($user) return $user;
-
-        return User::firstOrCreate(
+        return Auth::user() ?? User::firstOrCreate(
             ['email' => 'guest@ecomart.local'],
             ['name' => 'Guest', 'password' => bcrypt(str()->random(12))]
         );
     }
 
-    /** GET /wishlist */
     public function index(Request $request)
     {
         $user = $this->currentUser();
-        $sort = in_array($request->get('sort'), ['newest','price-asc','price-desc','eco-desc'])
-            ? $request->get('sort') : 'newest';
+        $sort = $request->get('sort', 'newest');
 
         $query = Product::select('products.*')
             ->join('wishlists', 'wishlists.product_id', '=', 'products.id')
             ->where('wishlists.user_id', $user->id);
 
-        switch ($sort) {
-            case 'price-asc':  $query->orderBy('products.price', 'asc'); break;
-            case 'price-desc': $query->orderBy('products.price', 'desc'); break;
-            case 'eco-desc':   $query->orderBy('products.eco_score', 'desc'); break; // pastikan kolomnya ada
-            case 'newest':
-            default:           $query->orderBy('wishlists.created_at', 'desc'); break;
-        }
+        match ($sort) {
+            'price-asc'  => $query->orderBy('products.price', 'asc'),
+            'price-desc' => $query->orderBy('products.price', 'desc'),
+            'eco-desc'   => $query->orderBy('products.eco_score', 'desc'),
+            default      => $query->orderBy('wishlists.created_at', 'desc'),
+        };
 
         $products = $query->paginate(12)->withQueryString();
-
         return view('wishlist', compact('products', 'sort'));
     }
 
-    /** POST /wishlist/toggle/{product} */
-    public function toggle(Product $product, Request $request)
+    public function toggle(Product $product)
     {
         $user = $this->currentUser();
-
-        $exists = $user->wishlist()->where('product_id', $product->id)->exists();
+        $exists = $user->wishlists()->where('product_id', $product->id)->exists();
 
         if ($exists) {
-            $user->wishlist()->detach($product->id);
+            $user->wishlists()->where('product_id', $product->id)->delete();
             $state = 'removed';
         } else {
-            $user->wishlist()->attach($product->id);
+            $user->wishlists()->create(['product_id' => $product->id]);
             $state = 'added';
         }
 
         return response()->json([
-            'ok'         => true,
-            'state'      => $state,
-            'product_id' => $product->id,
-            'count'      => $product->wishlistedBy()->count(),
+            'ok'             => true,
+            'state'          => $state,
+            'product_id'     => $product->id,
+            'wishlist_count' => $user->wishlists()->count(),
+            'badge_total'    => ($user->wishlists()->count() + session('cart_count', 0)),
         ]);
     }
 
-    /** DELETE /wishlist/{product} */
-    public function destroy(Product $product)
-    {
-        $user = $this->currentUser();
-        $user->wishlist()->detach($product->id);
-        return back()->with('success', 'Removed from wishlist.');
-    }
-
-    /** DELETE /wishlist/bulk-remove */
     public function bulkRemove(Request $request)
     {
-        $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'integer|exists:products,id',
-        ]);
-
+        $request->validate(['ids' => 'required|array']);
         $user = $this->currentUser();
-        $user->wishlist()->detach($request->input('ids', []));
-
-        return back()->with('success', 'Selected items removed from wishlist.');
+        $user->wishlists()->whereIn('product_id', $request->ids)->delete();
+        return back()->with('success', 'Selected items removed.');
     }
 
-    /** POST /wishlist/bulk-add-to-cart */
     public function bulkAddToCart(Request $request)
     {
-        $request->validate([
-            'ids'   => 'required|array',
-            'ids.*' => 'integer|exists:products,id',
-        ]);
-
+        $request->validate(['ids' => 'required|array']);
         $user = $this->currentUser();
         $cart = Cart::firstOrCreate(['user_id' => $user->id]);
-        $productIds = $request->input('ids', []);
 
-        DB::transaction(function () use ($cart, $productIds) {
-            foreach ($productIds as $pid) {
-                $item = CartItem::firstOrNew([
-                    'cart_id'    => $cart->id,
-                    'product_id' => $pid,
-                ]);
+        DB::transaction(function () use ($cart, $request) {
+            foreach ($request->ids as $pid) {
+                $item = CartItem::firstOrNew(['cart_id' => $cart->id, 'product_id' => $pid]);
                 $item->quantity = ($item->exists ? $item->quantity : 0) + 1;
                 $item->save();
             }
@@ -119,3 +87,4 @@ class WishlistController extends Controller
         return back()->with('success', 'Dipindahkan ke cart.');
     }
 }
+    

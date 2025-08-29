@@ -1,3 +1,4 @@
+{{-- resources/views/components/product-card.blade.php --}}
 @props(['product' => null])
 
 @php
@@ -16,7 +17,7 @@
       : url('/products/'.$id);
 
   $inWishlist = auth()->check() && $id
-      ? auth()->user()->hasInWishlist($id)
+      ? auth()->user()->wishlists()->where('product_id',$id)->exists()
       : false;
 @endphp
 
@@ -34,24 +35,25 @@
       class="object-cover w-full h-full"
       onerror="this.src='https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop'">
 
-    {{-- Badge kategori: jangan blokir klik --}}
+    {{-- Badge kategori --}}
     <span class="absolute top-2 left-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded pointer-events-none z-[2]">
       {{ $badge }}
     </span>
 
-    {{-- Tombol wishlist (harus di atas stretched link) --}}
+    {{-- Tombol wishlist --}}
     @if($id)
       <button
         type="button"
-        class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow hover:scale-105 transition z-[2]"
+        class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow hover:scale-105 transition z-[2] wishlist-btn"
         aria-label="{{ $inWishlist ? 'Remove from wishlist' : 'Add to wishlist' }}"
         data-wishlist-button
         data-product-id="{{ $id }}"
         data-url="{{ route('wishlist.toggle', $id) }}"
+        aria-pressed="{{ $inWishlist ? 'true' : 'false' }}"
         onclick="event.stopPropagation(); event.preventDefault(); handleWishlistToggle(this)"
       >
         <svg
-          class="w-5 h-5 {{ $inWishlist ? 'text-red-500' : 'text-gray-600' }}"
+          class="w-5 h-5 transition {{ $inWishlist ? 'text-red-500' : 'text-gray-600' }}"
           fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
           stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -63,7 +65,6 @@
 
   {{-- Body --}}
   <div class="p-4 relative z-[2]">
-    {{-- Judul juga link (opsional, aksesibilitas) --}}
     <h3 class="font-semibold text-base line-clamp-2">
       <a href="{{ $detailUrl }}" class="hover:underline">{{ \Illuminate\Support\Str::limit($name, 80) }}</a>
     </h3>
@@ -93,11 +94,56 @@
   </div>
 </div>
 
-{{-- Handler kecil supaya klik wishlist tidak mengarahkan ke detail --}}
+{{-- Handler JS untuk toggle wishlist --}}
+@push('scripts')
 <script>
-  function handleWishlistToggle(btn){
-    // Di sini kamu bisa AJAX fetch(btn.dataset.url, {method:'POST'}) dsb.
-    // Untuk demo:
-    alert('Wishlist toggled for product ID: ' + btn.dataset.productId);
+async function handleWishlistToggle(btn) {
+  const url = btn.dataset.url;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+      'Accept': 'application/json'
+    }
+  });
+
+  if (!res.ok) {
+    console.error('Wishlist toggle failed', res.status);
+    return;
   }
+  const data = await res.json();
+
+  if (data.ok) {
+    const svg = btn.querySelector('svg');
+    const added = data.state === 'added';
+
+    svg.classList.toggle('text-red-500', added);
+    svg.classList.toggle('text-gray-600', !added);
+    svg.setAttribute('fill', added ? 'currentColor' : 'none');
+    btn.setAttribute('aria-pressed', added ? 'true' : 'false');
+
+    // update badge navbar
+    const favHeart = document.getElementById('nav-fav-heart');
+    const wlBadge  = document.getElementById('wishlist-badge');
+    const wlCount  = Number(data?.wishlist_count ?? 0);
+    const hasAny   = wlCount > 0;
+
+    if (favHeart) {
+      favHeart.classList.toggle('text-red-600', hasAny);
+      favHeart.classList.toggle('text-gray-500', !hasAny);
+      favHeart.setAttribute('fill', hasAny ? 'currentColor' : 'none');
+    }
+    if (wlBadge) {
+      wlBadge.textContent = wlCount;
+      wlBadge.classList.toggle('hidden', !hasAny);
+    }
+
+    const cartBadge = document.getElementById('cart-badge');
+    if (cartBadge && typeof data?.badge_total === 'number') {
+      cartBadge.textContent = data.badge_total;
+      cartBadge.dataset.wishlistCount = String(wlCount);
+    }
+  }
+}
 </script>
+@endpush
