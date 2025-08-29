@@ -1,16 +1,13 @@
-
-
- <link rel="preconnect" href="https://fonts.bunny.net" />
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    @extends('layouts.app')
+@extends('layouts.app')
 
 @section('title','Cart — EcoMart')
 
 @section('content')
+  {{-- Stepper tepat di bawah navbar --}}
+  <x-checkout-steps current="cart" />
+
   {{-- Breadcrumb --}}
-  <nav class="text-sm text-gray-500 mb-6">
+  <nav class="text-sm text-gray-500 mb-6 mt-4">
     <ol class="flex items-center gap-2">
       <li><a href="{{ route('home') }}" class="hover:underline">Home</a></li>
       <li>›</li>
@@ -32,7 +29,9 @@
         @foreach($items as $item)
           @php
             $p = $item->product;
-            $line = (float)($p->price ?? 0) * (int)$item->quantity;
+            $unit = (float)($p->price ?? 0);
+            $qty  = (int)$item->quantity;
+            $line = $unit * $qty;
           @endphp
 
           <div class="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
@@ -46,7 +45,7 @@
                   <h4 class="font-medium text-gray-900">{{ $p->name }}</h4>
                   <p class="text-xs text-gray-500">Size: M, Color: Natural</p>
                   <p class="text-sm text-gray-600">
-                    {{ $p->category?->name }} · ${{ number_format($p->price ?? 0,2) }}
+                    {{ $p->category?->name }} · ${{ number_format($unit,2) }}
                   </p>
                 </div>
               </div>
@@ -54,20 +53,25 @@
               <div class="flex items-center gap-4">
                 {{-- qty controls --}}
                 <div class="flex items-center gap-2">
+                  {{-- Decrease --}}
                   <form action="{{ route('cart.update',$item) }}" method="POST">
                     @csrf @method('PATCH')
                     <input type="hidden" name="action" value="dec">
-                    <button class="w-8 h-8 rounded border flex items-center justify-center hover:bg-gray-50" title="Decrease">−</button>
+                    <button
+                      class="w-8 h-8 rounded border flex items-center justify-center hover:bg-gray-50 disabled:opacity-40"
+                      title="Decrease" {{ $qty <= 1 ? 'disabled' : '' }}>−</button>
                   </form>
 
-                  <form action="{{ route('cart.update',$item) }}" method="POST" class="w-12">
+                  {{-- Set exact qty (auto submit on change) --}}
+                  <form action="{{ route('cart.update',$item) }}" method="POST" class="w-12 qty-set-form">
                     @csrf @method('PATCH')
                     <input type="hidden" name="action" value="set">
                     <input name="quantity" type="number" min="1"
-                           value="{{ $item->quantity }}"
-                           class="w-full h-8 text-center border rounded">
+                           value="{{ $qty }}"
+                           class="w-full h-8 text-center border rounded qty-input">
                   </form>
 
+                  {{-- Increase --}}
                   <form action="{{ route('cart.update',$item) }}" method="POST">
                     @csrf @method('PATCH')
                     <input type="hidden" name="action" value="inc">
@@ -79,9 +83,11 @@
                   ${{ number_format($line,2) }}
                 </div>
 
+                {{-- Remove --}}
                 <form action="{{ route('cart.remove',$item) }}" method="POST">
                   @csrf @method('DELETE')
                   <button class="text-gray-400 hover:text-red-600" title="Remove">
+                    {{-- Heroicon: trash --}}
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8a1 1 0 001-1V5a1 1 0 00-1-1h-3m-4 0H8a1 1 0 00-1 1v1"/>
@@ -95,9 +101,7 @@
       @else
         {{-- Empty state --}}
         <div class="bg-white border rounded-xl p-10 text-center text-gray-600">
-          <div class="mx-auto w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            🛒
-          </div>
+          <div class="mx-auto w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">🛒</div>
           <h3 class="font-semibold text-lg">Your cart is empty</h3>
           <p class="text-sm mt-1">Browse our eco-friendly products and start adding items.</p>
           <a href="{{ route('product.index') }}"
@@ -145,11 +149,12 @@
         </span>
       </div>
 
-      <a href="#"
+      {{-- Tombol diperbaiki --}}
+      <a href="{{ route('checkout') }}"
          class="block w-full text-center bg-gray-900 text-white py-3 rounded-lg mt-4 hover:bg-gray-800">
         Proceed to Checkout
       </a>
-      <a href="{{ route('product.index') }}"
+      <a href={{ route('product.index') }}
          class="block text-center text-sm text-gray-600 hover:underline mt-2">
         Continue Shopping
       </a>
@@ -176,4 +181,15 @@
       @endif
     </div>
   </section>
+
+  {{-- Auto-submit qty setter --}}
+  <script>
+    document.querySelectorAll('.qty-input').forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        const v = Math.max(1, parseInt(e.target.value || '1', 10));
+        e.target.value = v;
+        e.target.closest('form').submit();
+      });
+    });
+  </script>
 @endsection
