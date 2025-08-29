@@ -62,5 +62,5 @@ class ProfileController extends Controller
         $user->update($validatedData);
 
         return redirect()->route('profile')->with('success', 'Profil berhasil diperbarui!');
-    }
+    }   
 }
