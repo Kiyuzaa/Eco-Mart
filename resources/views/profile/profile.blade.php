@@ -11,7 +11,7 @@
     <x-navbar />
 
     <div class="container mx-auto my-8 px-4 sm:px-6 lg:px-8">
-        
+
         @if(session('success'))
             <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-md" role="alert">
                 <p>{{ session('success') }}</p>
@@ -21,7 +21,12 @@
         <!-- User Header -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
             <div class="flex items-center gap-4">
-                <img class="w-20 h-20 rounded-full object-cover border-4 border-green-200" src="{{ asset('storage/' . $user->avatar) . '?v=' . $user->updated_at->timestamp }}" alt="User Avatar" onerror="this.onerror=null;this.src='https://i.pravatar.cc/150?u={{ $user->email }}';">
+                <img
+                    class="w-20 h-20 rounded-full object-cover border-4 border-green-200"
+                    src="{{ asset('storage/' . $user->avatar) . '?v=' . $user->updated_at->timestamp }}"
+                    alt="User Avatar"
+                    onerror="this.onerror=null;this.src='https://i.pravatar.cc/150?u={{ $user->email }}';"
+                >
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ $user->name }}</h1>
                     <p class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</p>
@@ -34,36 +39,65 @@
                     </div>
                 </div>
             </div>
-            <a href="{{ route('profile.edit') }}" class="w-full sm:w-auto bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-600 text-center">
-                Edit Profile
-            </a>
+
+            <div class="flex w-full sm:w-auto gap-2">
+                <a href="{{ route('profile.edit') }}"
+                   class="flex-1 sm:flex-none bg-gray-800 dark:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-700 dark:hover:bg-gray-600 text-center">
+                    Edit Profile
+                </a>
+
+                {{-- Logout harus via POST --}}
+                <form action="{{ route('logout') }}" method="POST" class="flex-1 sm:flex-none">
+                    @csrf
+                    <button type="submit"
+                            class="w-full bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700">
+                        Logout
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center gap-4">
-                <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-full"><svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"></path></svg></div>
+                <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01"></path>
+                    </svg>
+                </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Reward Points</p>
                     <p class="text-2xl font-bold text-gray-900 dark:text-white">2,450</p>
                 </div>
             </div>
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center gap-4">
-                <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-full"><svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg></div>
+                <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Total Orders</p>
                     <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ $orders->count() }}</p>
                 </div>
             </div>
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center gap-4">
-                <div class="bg-red-100 dark:bg-red-900 p-3 rounded-full"><svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div>
+                <div class="bg-red-100 dark:bg-red-900 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Waste Managed</p>
                     <p class="text-2xl font-bold text-gray-900 dark:text-white">125 <span class="text-lg">kg</span></p>
                 </div>
             </div>
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center gap-4">
-                <div class="bg-green-100 dark:bg-green-900 p-3 rounded-full"><svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg></div>
+                <div class="bg-green-100 dark:bg-green-900 p-3 rounded-full">
+                    <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                    </svg>
+                </div>
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">CO2 Saved</p>
                     <p class="text-2xl font-bold text-gray-900 dark:text-white">89 <span class="text-lg">kg</span></p>
@@ -108,22 +142,22 @@
                     </div>
                     <div class="space-y-4">
                         @forelse($orders as $order)
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">IMG</div>
-                            <div class="flex-grow">
-                                <p class="font-medium">Pesanan #{{ $order->id }}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $order->created_at->format('M d, Y') }}</p>
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">IMG</div>
+                                <div class="flex-grow">
+                                    <p class="font-medium">Pesanan #{{ $order->id }}</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $order->created_at->format('M d, Y') }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-semibold">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                                    <p class="text-sm text-green-500">+{{-- Placeholder --}}50 points</p>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="font-semibold">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
-                                <p class="text-sm text-green-500">+{{-- Placeholder --}}50 points</p>
-                            </div>
-                        </div>
                         @empty
-                        <p class="text-sm text-gray-500 dark:text-gray-400">No purchase history yet.</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">No purchase history yet.</p>
                         @endforelse
                     </div>
-                     <div class="mt-4">
+                    <div class="mt-4">
                         {{ $orders->links() }}
                     </div>
                 </div>

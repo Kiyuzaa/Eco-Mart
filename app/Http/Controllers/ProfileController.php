@@ -17,13 +17,13 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Mengambil semua data yang relevan dengan pengguna
         // Eager load 'product' untuk efisiensi
         $wishlistItems = $user->wishlists()->with('product')->get();
         $orders = $user->orders()->latest()->paginate(5); // Menggunakan paginasi untuk pesanan
         $testimonials = $user->testimonials()->latest()->get();
-        
+
         return view('profile.profile', compact('user', 'orders', 'wishlistItems', 'testimonials'));
     }
 
@@ -62,5 +62,5 @@ class ProfileController extends Controller
         $user->update($validatedData);
 
         return redirect()->route('profile')->with('success', 'Profil berhasil diperbarui!');
-    }   
+    }
 }

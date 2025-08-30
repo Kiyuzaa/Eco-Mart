@@ -11,22 +11,16 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         $categories = [
-            'Food',
-            'Beverages',
-            'Household',
-            'Fashion',
-            'Electronics',
-            'Health & Beauty',
-            'Sports',
-            'Books',
             'Toys',
-            'Office Supplies',
+            'Fashion',
+            'Health & Beauty',
+            'Books',
         ];
 
         foreach ($categories as $i => $name) {
             Category::create([
                 'name' => $name,
-                'slug' => Str::slug($name) . '-' . ($i+1), // jaga unik kalau ada unique index
+                'slug' => Str::slug($name) . '-' . ($i+1), // tetap unik
             ]);
         }
     }

@@ -34,17 +34,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    
+
     Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])
         ->name('wishlist.toggle');
 
     // Checkout
     // PERBAIKAN: Mengubah 'index' menjadi 'show' agar sesuai dengan controller
-    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout'); 
+    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'placeOrder'])->name('checkout.place');
     Route::get('/orders/{order}/waiting', [CheckoutController::class, 'waiting'])->name('orders.waiting');
     Route::get('/order/success', function () {
-        return view('orders.success'); 
+        return view('orders.success');
     })->name('order.success');
 });
 
