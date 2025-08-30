@@ -12,6 +12,7 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\Admin\CustomerController;
 
 
 /*
@@ -56,6 +57,8 @@ Route::middleware(['auth','role:admin'])
     ->group(function () {
 
         Route::get('/', [AdminProductController::class, 'index'])->name('dashboard');
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+         Route::get('customers/{user}', [CustomerController::class, 'show'])->name('customers.show');
 
         // products
         Route::get('/products',                    [AdminProductController::class, 'index'])->name('products.index');

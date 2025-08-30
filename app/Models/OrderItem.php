@@ -11,10 +11,10 @@ class OrderItem extends Model
         'order_id','product_id','quantity','price',
     ];
 
-    public function order(): BelongsTo
-    {
-        return $this->belongsTo(Order::class);
-    }
+    public function order()
+{
+    return $this->belongsTo(\App\Models\Order::class);
+}
 
     public function product(): BelongsTo
     {
