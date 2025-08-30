@@ -1,49 +1,121 @@
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  const badge = document.getElementById('cart-badge');
+// resources/js/app.js
+import "./bootstrap";
 
-  function setHeart(el, on) {
-    const svg = el.querySelector('svg');
-    svg.classList.toggle('text-red-500',  on);
-    svg.classList.toggle('text-gray-600', !on);
-    svg.setAttribute('fill', on ? 'currentColor' : 'none');
-    el.setAttribute('aria-pressed', on ? 'true' : 'false');
-  }
+// Jalankan setelah DOM siap
+document.addEventListener("DOMContentLoaded", () => {
+    // ====== HAMBURGER / MENU MOBILE ======
+    const btn = document.getElementById("hamburger-btn");
+    const menu = document.getElementById("mobile-menu");
+    const openIcon = document.getElementById("icon-open");
+    const closeIcon = document.getElementById("icon-close");
 
-  function updateBadge(newWishlistCount) {
-    if (!badge) return;
-    const baseCart = parseInt(badge.dataset.cartCount || '0', 10);
-    badge.dataset.wishlistCount = String(newWishlistCount);
-    badge.textContent = String(baseCart + newWishlistCount); // cart + wishlist
-  }
-
-  window.handleWishlistToggle = async function(btn) {
-    const url = btn.dataset.url;           // ← ambil dari data-url
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': token,
-          'Accept': 'application/json'
-        }
-      });
-      const data = await res.json();
-      if (data && data.ok) {
-        setHeart(btn, data.in_wishlist);       // merah / abu
-        updateBadge(data.wishlist_count);      // update badge
-      }
-    } catch (e) {
-      console.error(e);
+    function syncMenuState() {
+        if (!btn || !menu) return;
+        const opened = !menu.classList.contains("hidden");
+        if (openIcon) openIcon.classList.toggle("hidden", opened);
+        if (closeIcon) closeIcon.classList.toggle("hidden", !opened);
+        btn.setAttribute("aria-expanded", opened ? "true" : "false");
+        // kunci scroll saat drawer terbuka (opsional)
+        document.documentElement.classList.toggle("overflow-hidden", opened);
+        document.body.classList.toggle("overflow-hidden", opened);
     }
-  };
 
-  // (opsional) binding click jika tidak pakai onclick di HTML
-  document.querySelectorAll('[data-wishlist-button]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      window.handleWishlistToggle(btn);
-    });
-  });
+    if (btn && menu) {
+        syncMenuState();
+        btn.addEventListener("click", () => {
+            menu.classList.toggle("hidden");
+            syncMenuState();
+        });
+        document.addEventListener("click", (e) => {
+            if (
+                !btn.contains(e.target) &&
+                !menu.contains(e.target) &&
+                !menu.classList.contains("hidden")
+            ) {
+                menu.classList.add("hidden");
+                syncMenuState();
+            }
+        });
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !menu.classList.contains("hidden")) {
+                menu.classList.add("hidden");
+                syncMenuState();
+            }
+        });
+    }
+
+    // ====== GLOBAL HELPER BADGE (jaga-jaga kalau belum ada) ======
+    if (typeof window.updateCartBadge !== "function") {
+        window.updateCartBadge = function (count) {
+            const el = document.getElementById("cart-badge");
+            if (!el) return;
+            const n = Number(count ?? 0);
+            el.textContent = n;
+            el.style.display = n > 0 ? "inline-flex" : "none";
+        };
+    }
+    if (typeof window.updateWishlistBadge !== "function") {
+        window.updateWishlistBadge = function (count) {
+            const el = document.getElementById("wishlist-badge");
+            if (!el) return;
+            const n = Number(count ?? 0);
+            el.textContent = n;
+            el.style.display = n > 0 ? "inline-flex" : "none";
+        };
+    }
+
+    // ====== TOGGLE WISHLIST (boleh dihapus jika sudah ada di Blade @push) ======
+    if (typeof window.ecoWishlistToggle !== "function") {
+        window.ecoWishlistToggle = async function (btn) {
+            const url = btn?.dataset?.url;
+            const pid = btn?.dataset?.productId;
+            if (!url) return;
+
+            try {
+                const res = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN":
+                            document
+                                .querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute("content") || "",
+                        "X-Requested-With": "XMLHttpRequest",
+                        Accept: "application/json",
+                    },
+                    credentials: "same-origin",
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const added = data?.state === "added" || !!data?.added;
+
+                document
+                    .querySelectorAll(
+                        `[data-wishlist-button][data-product-id="${pid}"]`
+                    )
+                    .forEach((el) => {
+                        const svg = el.querySelector("svg");
+                        if (!svg) return;
+                        svg.classList.toggle("text-pink-600", added);
+                        svg.classList.toggle("text-gray-600", !added);
+                        svg.setAttribute(
+                            "fill",
+                            added ? "currentColor" : "none"
+                        );
+                        el.setAttribute(
+                            "aria-pressed",
+                            added ? "true" : "false"
+                        );
+                        el.setAttribute(
+                            "aria-label",
+                            added ? "Hapus dari Wishlist" : "Tambah ke Wishlist"
+                        );
+                    });
+
+                const wlCount = Number(data?.wishlist_count ?? 0);
+                window.updateWishlistBadge(wlCount);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+    }
 });
-</script>   
