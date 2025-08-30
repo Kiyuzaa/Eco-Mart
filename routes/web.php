@@ -68,7 +68,7 @@ Route::post('/checkout/place', [CheckoutController::class, 'place'])->name('chec
 
 Route::get('/orders/{order}/waiting', [CheckoutController::class, 'waiting'])->name('order.waiting');
 Route::get('/orders/{order}', [OrderController::class, 'show'])
-        ->name('orders.show');   // <— ini yang dicari Blade
+        ->name('orders.show');   
 
 
     // (Opsional) halaman sukses sederhana jika kamu memang punya view-nya
