@@ -42,7 +42,7 @@ class LoginController extends Controller
     if ($user->role === 'admin') {
         return redirect()->route('admin.dashboard');
     }
-    return redirect()->route('product.index');
+    return redirect()->route('home');
 }
 
 }
