@@ -9,7 +9,8 @@
 
     {{-- Brand / Logo --}}
     <a href="{{ route('home') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
-      <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="EcoMart Logo" />
+      <img src="{{ asset('images/logoEcomart.png') }}" class="h-8" alt="EcoMart Logo">
+
       <span class="self-center text-2xl font-semibold whitespace-nowrap text-gray-900">EcoMart</span>
     </a>
 
@@ -109,7 +110,7 @@
         </a>
       @endif
     @endauth
-    
+
 
     {{-- Menu items --}}
     <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-search">
