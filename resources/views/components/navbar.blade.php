@@ -20,7 +20,7 @@
       <li><a href="{{ route('product.index') }}" class="{{ $is('product*') }}">Produk</a></li>
       <li><a href="{{ route('ai.bot') }}" class="{{ $is('ai*') }}">Asisten AI</a></li>
       <li><a href="{{ route('about') }}" class="{{ $is('about') }}">Tentang</a></li>
-      <li><a href="#contact" class="text-gray-900 hover:text-emerald-800">Kontak</a></li>
+      <li><a href="{{ route('contact') }}" class="{{ $is('contact*') }}">Kontak</a></li>
       @auth
         @if(method_exists(auth()->user(),'isAdmin') && auth()->user()->isAdmin())
           <li>
@@ -32,7 +32,6 @@
 
     {{-- Aksi kanan --}}
     <div class="flex items-center gap-2 md:gap-3">
-
       {{-- Wishlist --}}
       <a href="{{ route('wishlist') }}" class="relative inline-flex items-center justify-center rounded-xl p-2 text-gray-600 hover:bg-gray-100" aria-label="Wishlist">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 {{ $wish>0 ? 'text-pink-600' : 'text-gray-500' }}"
@@ -81,9 +80,9 @@
       @endauth
 
       {{-- Hamburger --}}
-      <button id="hamburger-btn"
+      <button id="hamburger-btn" type="button"
               class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 hover:bg-gray-50"
-              aria-controls="mobile-menu" aria-expanded="false" aria-label="Buka menu">
+              aria-controls="mobile-panel" aria-expanded="false" aria-label="Buka menu">
         <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 17 14" fill="none">
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
         </svg>
@@ -94,15 +93,15 @@
     </div>
   </div>
 
-  {{-- Dropdown mobile --}}
-  <div id="mobile-menu" class="hidden md:hidden relative">
-    <div class="absolute right-4 top-2 w-[92%] sm:w-80 rounded-2xl border border-gray-200 bg-white shadow-xl">
+  {{-- Dropdown mobile (wrapper relative, panel absolute) --}}
+  <div id="mobile-menu" class="md:hidden relative">
+    <div id="mobile-panel" class="hidden absolute right-4 top-2 w-[92%] sm:w-80 rounded-2xl border border-gray-200 bg-white shadow-xl z-50">
       <ul class="p-2">
         <li><a href="{{ route('home') }}" class="block px-4 py-2.5 rounded-lg {{ $is('/') }}">Beranda</a></li>
         <li><a href="{{ route('product.index') }}" class="block px-4 py-2.5 rounded-lg {{ $is('product*') }}">Produk</a></li>
         <li><a href="{{ route('ai.bot') }}" class="block px-4 py-2.5 rounded-lg {{ $is('ai*') }}">Asisten AI</a></li>
         <li><a href="{{ route('about') }}" class="block px-4 py-2.5 rounded-lg {{ $is('about') }}">Tentang</a></li>
-        <li><a href="#contact" class="block px-4 py-2.5 rounded-lg text-gray-900 hover:text-emerald-800">Kontak</a></li>
+        <li><a href="{{ route('contact') }}" class="block px-4 py-2.5 rounded-lg {{ $is('contact*') }}">Kontak</a></li>
         @auth
           @if(method_exists(auth()->user(),'isAdmin') && auth()->user()->isAdmin())
             <li class="px-4 py-2.5">
@@ -135,42 +134,69 @@
 
 <script>
 (function () {
-  const btn = document.getElementById('hamburger-btn');
-  const menu = document.getElementById('mobile-menu');
-  const openIcon  = document.getElementById('icon-open');   // ☰
-  const closeIcon = document.getElementById('icon-close');  // ✕
-
-  function syncState() {
-    const opened = !menu.classList.contains('hidden');     // menu terbuka = tidak punya class hidden
-    openIcon.classList.toggle('hidden', opened);           // sembunyikan ikon ☰ saat terbuka
-    closeIcon.classList.toggle('hidden', !opened);         // sembunyikan ikon ✕ saat tertutup
-    btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
   }
 
-  // keadaan awal (kalau HTML awalnya sudah hidden)
-  syncState();
+  function init() {
+    const btn = document.getElementById('hamburger-btn');
+    const menu = document.getElementById('mobile-menu');     // wrapper (relative)
+    const panel = document.getElementById('mobile-panel');   // panel (absolute)
+    const openIcon  = document.getElementById('icon-open');
+    const closeIcon = document.getElementById('icon-close');
 
-  // toggle saat tombol diklik
-  btn.addEventListener('click', () => {
-    menu.classList.toggle('hidden');
-    syncState();
-  });
+    if (!btn || !menu || !panel || !openIcon || !closeIcon) return;
 
-  // klik di luar -> tutup
-  document.addEventListener('click', (e) => {
-    if (!btn.contains(e.target) && !menu.contains(e.target) && !menu.classList.contains('hidden')) {
-      menu.classList.add('hidden');
-      syncState();
+    // cegah double-binding saat komponen dirender ulang
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+
+    const isOpen = () => !panel.classList.contains('hidden');
+
+    function setState(opened) {
+      panel.classList.toggle('hidden', !opened);
+      openIcon.classList.toggle('hidden', opened);
+      closeIcon.classList.toggle('hidden', !opened);
+      btn.setAttribute('aria-expanded', opened ? 'true' : 'false');
+      panel.setAttribute('aria-hidden', opened ? 'false' : 'true');
     }
-  });
 
-  // ESC -> tutup
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !menu.classList.contains('hidden')) {
-      menu.classList.add('hidden');
-      syncState();
-    }
-  });
+    // start tertutup
+    setState(false);
+
+    // toggle via tombol
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setState(!isOpen());
+    });
+
+    // klik di luar menutup
+    document.addEventListener('click', (e) => {
+      if (!isOpen()) return;
+      if (!btn.contains(e.target) && !panel.contains(e.target)) {
+        setState(false);
+      }
+    });
+
+    // ESC menutup
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen()) {
+        setState(false);
+        btn.focus();
+      }
+    });
+
+    // handle perubahan breakpoint md
+    let lastIsMobile = window.innerWidth < 768;
+    window.addEventListener('resize', () => {
+      const isMobile = window.innerWidth < 768;
+      if (isMobile !== lastIsMobile) {
+        setState(false);
+        lastIsMobile = isMobile;
+      }
+    });
+  }
 })();
 </script>
-

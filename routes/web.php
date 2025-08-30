@@ -11,6 +11,8 @@ use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\ContactController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -86,6 +88,9 @@ Route::post('/wishlist/bulk-add-to-cart', [WishlistController::class, 'bulkAddTo
 Route::view('/ai-bot', 'ai-bot')->name('ai.bot');
 Route::get('/chat', [AiChatController::class, 'index'])->name('chat.index');
 Route::post('/chat', [AiChatController::class, 'send'])->name('chat.send');
+
+Route::view('/contact', 'contact')->name('contact');        // GET halaman kontak
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
 
 
