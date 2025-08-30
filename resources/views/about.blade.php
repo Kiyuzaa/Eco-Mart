@@ -26,7 +26,9 @@
           EcoMart adalah toko berkelanjutan yang mengkurasi produk ramah lingkungan—dari kebutuhan rumah tangga,
           gaya hidup, hingga pilihan zero-waste—agar setiap transaksi membawa dampak baik.
         </p>
-        @php $shopUrl = \Illuminate\Support\Facades\Route::has('product.index') ? route('product.index') : url('/product'); @endphp
+        @php 
+          $shopUrl = \Illuminate\Support\Facades\Route::has('product.index') ? route('product.index') : url('/product'); 
+        @endphp
         <div class="mt-6 flex flex-wrap gap-3">
           <a href="{{ $shopUrl }}" class="inline-flex items-center rounded-xl bg-emerald-700 px-5 py-3 text-white hover:bg-emerald-800">Belanja Produk</a>
           <a href="#komitmen" class="inline-flex items-center rounded-xl border border-emerald-700 px-5 py-3 text-emerald-800 hover:bg-emerald-50">Komitmen Kami</a>
@@ -35,8 +37,15 @@
 
       <div class="relative">
         <div class="rounded-2xl border bg-white p-3 shadow-sm max-w-lg ml-auto">
-          <img src="https://images.unsplash.com/photo-1543164904-8f8e6e89c7ec?q=80&w=1400&auto=format&fit=crop"
-               alt="Tim EcoMart memilah produk berkelanjutan" class="rounded-xl w-full object-cover aspect-[4/3]">
+          {{-- Hero Image with fallback --}}
+          <img 
+            src="https://images.unsplash.com/photo-1543164904-8f8e6e89c7ec?q=80&w=1400&auto=format&fit=crop"
+            alt="Tim EcoMart memilah produk berkelanjutan"
+            class="rounded-xl w-full object-cover aspect-[4/3]"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            onerror="this.onerror=null;this.src='{{ asset('images/about-hero.jpg') }}';"
+          >
         </div>
         <div class="absolute -bottom-4 -left-4 hidden sm:block">
           <span class="inline-block rounded-xl bg-emerald-100 text-emerald-700 px-3 py-1 text-sm shadow">
@@ -111,15 +120,43 @@
   </section>
 
   {{-- TIM KAMI --}}
+{{-- TIM KAMI --}}
 <section class="py-10 border-t">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <h2 class="text-2xl font-bold">Tim Kami</h2>
     <p class="text-slate-600">Orang-orang di balik EcoMart.</p>
 
+    @php
+      // Cari file yang benar-benar ada di public/ (handle .jpg/.jpeg dan storage link)
+      $candidates = function (string $basename) {
+        return [
+          "images/team/{$basename}.jpg",
+          "images/team/{$basename}.jpeg",
+          "storage/images/team/{$basename}.jpg",
+          "storage/images/team/{$basename}.jpeg",
+          "storage/team/{$basename}.jpg",
+          "storage/team/{$basename}.jpeg",
+        ];
+      };
+
+      $findPublicPath = function(array $paths) {
+        foreach ($paths as $rel) {
+          if (file_exists(public_path($rel))) return $rel;
+        }
+        return null;
+      };
+
+      $ezaPath  = $findPublicPath($candidates('eza'));   // → eza.jpg / eza.jpeg
+      $zakiPath = $findPublicPath($candidates('zaki'));  // → zaki.jpg / zaki.jpeg
+    @endphp
+
     <div class="mt-6 grid grid-cols-2 md:grid-cols-2 gap-5">
       <div class="rounded-2xl border bg-white overflow-hidden">
-        <img src="{{ asset('images/team/eza.jpg') }}" alt="Foto Eza Fadlan Maulana"
-             class="w-full h-56 object-cover" loading="lazy">
+        <img
+          src="{{ $ezaPath ? asset($ezaPath) : 'https://placehold.co/800x450?text=Eza+Fadlan+Maulana' }}"
+          alt="Foto Eza Fadlan Maulana"
+          class="w-full h-56 object-cover"
+          loading="lazy">
         <div class="p-4">
           <div class="font-semibold">Eza Fadlan Maulana</div>
           <div class="text-sm text-slate-600">Web Developer</div>
@@ -127,14 +164,20 @@
       </div>
 
       <div class="rounded-2xl border bg-white overflow-hidden">
-        <img src="{{ asset('images/team/zaki.jpg') }}" alt="Foto Zakiyuddin Muhammad Syafiq"
-             class="w-full h-56 object-cover" loading="lazy">
+        <img
+          src="{{ $zakiPath ? asset($zakiPath) : 'https://placehold.co/800x450?text=Zakiyuddin+Muhammad+Syafiq' }}"
+          alt="Foto Zakiyuddin Muhammad Syafiq"
+          class="w-full h-56 object-cover"
+          loading="lazy">
         <div class="p-4">
           <div class="font-semibold">Zakiyuddin Muhammad Syafiq</div>
           <div class="text-sm text-slate-600">Web Developer</div>
         </div>
       </div>
     </div>
+
+    {{-- Debug kecil (opsional): tampilkan path yang terdeteksi --}}
+    {{-- <pre class="text-xs text-slate-500 mt-3">Eza: {{ $ezaPath ?? 'NOT FOUND' }} | Zaki: {{ $zakiPath ?? 'NOT FOUND' }}</pre> --}}
   </div>
 </section>
 
@@ -162,7 +205,7 @@
     </div>
   </section>
 
-  {{-- FAQ ringkas --}}
+  {{-- FAQ --}}
   <section class="py-10 border-t">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl font-bold text-center">Pertanyaan Umum</h2>
