@@ -51,15 +51,9 @@
           Kembali ke Beranda
         </a>
 
-        @if (Route::has('orders.index'))
-          <a href="{{ route('orders.index') }}" class="px-5 py-2.5 rounded-lg border hover:bg-gray-50">
-            Lihat Riwayat Pesanan
-          </a>
-        @else
-          <a href="{{ route('orders.show', $order->id ?? 0) }}" class="px-5 py-2.5 rounded-lg border hover:bg-gray-50">
-            Detail Pesanan
-          </a>
-        @endif
+        <a href="{{ url('/profile') }}" class="px-5 py-2.5 rounded-lg border hover:bg-gray-50">
+          Lihat Profil
+        </a>
       </div>
     </section>
   </main>

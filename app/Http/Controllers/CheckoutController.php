@@ -13,7 +13,7 @@ use App\Models\RewardPointTransaction;
 class CheckoutController extends Controller
 {
     /**
-     * Ambil / buat cart milik user saat ini.
+     * Ambil atau buat keranjang milik user login
      */
     protected function currentCart(): Cart
     {
@@ -25,7 +25,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Halaman Checkout (tampilkan ringkasan dan form).
+     * Halaman Checkout — tampilkan ringkasan belanja
      */
     public function show()
     {
@@ -33,24 +33,21 @@ class CheckoutController extends Controller
         $cart  = $this->currentCart()->load('items.product');
 
         if ($cart->items->isEmpty()) {
-            return redirect()->route('cart.index')->withErrors(['cart' => 'Keranjangmu kosong.']);
+            return redirect()->route('cart.index')
+                ->withErrors(['cart' => 'Keranjangmu kosong.']);
         }
 
-        // Hitung subtotal & pajak
+        // Hitung subtotal
         $subtotal = (int) $cart->items->sum(
             fn($i) => (int) $i->quantity * (float) ($i->product->price ?? 0)
         );
         $tax = (int) round($subtotal * 0.11);
-
-        // Ongkir default
         $shippingCost = 15000;
 
-        // Hormati kupon FREESHIP
+        // Kupon
         if (session('cart_free_shipping')) {
             $shippingCost = 0;
         }
-
-        // Diskon kupon nominal (misal ECO10 = 10000)
         $sessionDiscount = (int) session('cart_discount', 0);
 
         $total = max(0, $subtotal + $tax + $shippingCost - $sessionDiscount);
@@ -75,7 +72,6 @@ class CheckoutController extends Controller
         $user = Auth::user();
         $cart = $this->currentCart()->load('items.product');
 
-        // Validasi form
         $data = $request->validate([
             'name'             => 'required|string|max:255',
             'phone'            => 'required|string|max:30',
@@ -91,26 +87,25 @@ class CheckoutController extends Controller
             return back()->withErrors(['cart' => 'Keranjang kosong.']);
         }
 
-        // Hitung subtotal, pajak, ongkir
+        // Hitung biaya
         $subtotal = (int) $cart->items->sum(
             fn($i) => (int) $i->quantity * (float) ($i->product->price ?? 0)
         );
         $tax = (int) round($subtotal * 0.11);
         $shippingCost = $data['shipping_method'] === 'express' ? 25000 : 15000;
 
-        // Terapkan kupon (nominal) & FREESHIP
         $couponDiscount = (int) session('cart_discount', 0);
         if (session('cart_free_shipping')) {
             $shippingCost = 0;
         }
 
-        // Aturan poin
+        // Redeem poin
         $inputPoints = (int) ($data['redeem_points'] ?? 0);
         $available   = (int) $user->available_points;
 
         $minRedeem  = (int) config('ecomart.points.min_redeem', 100);
         $conversion = (int) config('ecomart.points.conversion_value', 100); // 1 poin = Rp100
-        $maxPct     = (int) config('ecomart.points.max_percentage_discount', 50); // max 50% dari base
+        $maxPct     = (int) config('ecomart.points.max_percentage_discount', 50);
 
         if ($inputPoints > 0) {
             if ($inputPoints < $minRedeem) {
@@ -121,10 +116,10 @@ class CheckoutController extends Controller
             }
         }
 
-        // Base sebelum diskon poin
+        // Base harga sebelum diskon poin
         $base = max(0, $subtotal + $tax + $shippingCost - $couponDiscount);
 
-        // Diskon poin dibatasi presentase dari base
+        // Diskon dari poin
         $rawDiscount    = $inputPoints * $conversion;
         $maxPointDisc   = (int) floor($base * ($maxPct / 100));
         $pointsDiscount = min($rawDiscount, $maxPointDisc);
@@ -135,7 +130,7 @@ class CheckoutController extends Controller
         try {
             DB::beginTransaction();
 
-            // Buat order → ENUM status hanya punya 'pending','paid',dst → pakai 'pending'
+            // Simpan order
             $order = Order::create([
                 'user_id'          => $user->id,
                 'status'           => 'pending',
@@ -158,7 +153,7 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Catat transaksi REDEEM (negatif) bila dipakai
+            // Catat transaksi REDEEM
             if ($inputPoints > 0 && $pointsDiscount > 0) {
                 RewardPointTransaction::create([
                     'user_id'     => $user->id,
@@ -168,7 +163,7 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Tambah poin (EARN) dari pembelian
+            // Tambah poin (EARN)
             $earnPoints = (int) floor($grand / max(1, $conversion));
             if ($earnPoints > 0) {
                 RewardPointTransaction::create([
@@ -179,7 +174,7 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Kosongkan keranjang & sesi kupon
+            // Kosongkan keranjang & hapus kupon dari session
             CartItem::where('cart_id', $cart->id)->delete();
             session()->forget(['cart_discount', 'cart_code', 'cart_free_shipping']);
 
@@ -189,19 +184,20 @@ class CheckoutController extends Controller
             return back()->withErrors(['checkout' => 'Gagal membuat pesanan: ' . $e->getMessage()]);
         }
 
-        // Redirect ke halaman "order waiting"
         return redirect()
-            ->route('orders.waiting', ['order' => $order->id])
+            ->route('order.waiting', ['order' => $order->id])
             ->with('success', 'Pesanan dikonfirmasi. Poin didapat: ' . number_format($earnPoints ?? 0, 0, ',', '.') .
                 ($pointsDiscount > 0 ? (' | Diskon poin: Rp ' . number_format($pointsDiscount, 0, ',', '.')) : '')
             );
     }
 
     /**
-     * Halaman menunggu (order waiting).
+     * Halaman order-waiting (pesanan sedang diproses)
      */
     public function waiting(Order $order)
     {
+        abort_unless($order->user_id === Auth::id(), 403);
+
         return view('order-waiting', compact('order'));
     }
 }

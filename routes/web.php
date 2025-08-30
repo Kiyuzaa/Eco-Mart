@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
 Route::post('/checkout/place', [CheckoutController::class, 'place'])->name('checkout.place');
 
-Route::get('/orders/{order}/waiting', [CheckoutController::class, 'waiting'])->name('orders.waiting');
+Route::get('/orders/{order}/waiting', [CheckoutController::class, 'waiting'])->name('order.waiting');
 Route::get('/orders/{order}', [OrderController::class, 'show'])
         ->name('orders.show');   // <— ini yang dicari Blade
 
