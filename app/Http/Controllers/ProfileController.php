@@ -18,13 +18,41 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        // Mengambil semua data yang relevan dengan pengguna
-        // Eager load 'product' untuk efisiensi
+        // Ambil relasi yang dibutuhkan
         $wishlistItems = $user->wishlists()->with('product')->get();
-        $orders = $user->orders()->latest()->paginate(5); // Menggunakan paginasi untuk pesanan
+        $orders        = $user->orders()->latest()->paginate(5); // riwayat pesanan (tampilan)
+
+        // ====== Sinkronisasi Reward Points dari Riwayat Pembelian ======
+        // Aturan konversi & status yang berhak mendapat poin
+        $rate = (float) config('ecomart.points_per_rupiah', 1 / 10000); // default: 1 poin / Rp10.000
+        $pointableStatuses = config('ecomart.pointable_status', ['paid', 'completed', 'delivered']);
+
+        // Hitung poin dari seluruh order yang valid (tanpa paginasi agar akurat)
+        $ordersForPoints = $user->orders()
+            ->whereIn('status', $pointableStatuses)
+            ->get();
+
+        $pointsFromPurchases = $ordersForPoints->sum(function ($o) use ($rate) {
+            return (int) floor($o->total_price * $rate);
+        });
+
+        // Jika punya skema poin referral, ambil dari kolom user; jika tidak, akan 0
+        $pointsFromReferrals = (int) ($user->referral_points ?? 0);
+
+        $totalPoints = $pointsFromPurchases + $pointsFromReferrals;
+        // ===============================================================
+
         $testimonials = $user->testimonials()->latest()->get();
 
-        return view('profile.profile', compact('user', 'orders', 'wishlistItems', 'testimonials'));
+        return view('profile.profile', compact(
+            'user',
+            'orders',
+            'wishlistItems',
+            'testimonials',
+            'pointsFromPurchases',
+            'pointsFromReferrals',
+            'totalPoints'
+        ));
     }
 
     public function edit()
