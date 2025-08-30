@@ -1,209 +1,170 @@
 @extends('admin.layout') {{-- pakai layout adminmu --}}
 
-@section('title','Manajemen Produk')
-@section('header-title','Manajemen Produk')
-@section('header-subtitle','Kelola persediaan produk Anda')
+@section('title','Product Management')
+@section('header-title','Product Management')
+@section('header-subtitle','Manage your product inventory')
 
 @section('header-button')
-<a href="{{ route('admin.products.index') }}"
-    class="px-4 py-2 rounded bg-gray-900 text-white text-sm">
-    + Tambah Produk
-</a>
+  <a href="{{ route('admin.products.index') }}"
+     class="px-4 py-2 rounded bg-gray-900 text-white text-sm">
+     + Add Product
+  </a>
 @endsection
 
 @section('content')
   {{-- ALERT --}}
   @if(session('success'))
-    <div class="mb-4 px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm border border-emerald-200">
+    <div class="mb-4 p-3 rounded bg-green-50 text-green-700 text-sm">
       {{ session('success') }}
     </div>
   @endif
   @if ($errors->any())
-    <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">
-      <ul class="list-disc pl-5 space-y-0.5">
+    <div class="mb-4 p-3 rounded bg-red-50 text-red-600 text-sm">
+      <ul class="list-disc pl-5">
         @foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach
       </ul>
     </div>
   @endif
 
-  {{-- ========== TAMBAH PRODUK BARU (Bisa Dibuka/Tutup) ========== --}}
-  <details class="group bg-white border border-slate-200 rounded-xl shadow-sm mb-6 open:mb-6">
-    <summary
-      class="cursor-pointer list-none px-6 py-4 border-b border-slate-200 flex items-center justify-between select-none"
-    >
-      <div>
-        <h3 class="text-[15px] font-semibold text-slate-800">Tambah Produk Baru</h3>
-        <p class="text-xs text-slate-500">Tambah item baru ke katalog Anda dengan cepat</p>
-      </div>
-      <svg class="w-5 h-5 text-slate-500 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none"
-           xmlns="http://www.w3.org/2000/svg">
-        <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </summary>
+  {{-- CARD: Add New Product (AKURAT sesuai mockup) --}}
+  <div class="bg-white border border-gray-200 rounded-xl shadow-sm mb-6">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h3 class="text-[15px] font-semibold text-gray-800">Add New Product</h3>
+    </div>
 
     <div class="p-6">
-      <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
-        {{-- Baris 1 --}}
+        {{-- Row 1: Product Name / Slug --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Nama Produk</label>
-            <input type="text" name="name" required placeholder="Masukkan nama produk" value="{{ old('name') }}"
-                   class="w-full h-10 rounded-md border border-slate-300 px-3 text-sm
-                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <label class="block text-sm text-gray-600 mb-1">Product Name</label>
+            <input type="text" name="name"
+                   class="w-full rounded-md border border-gray-300 focus:border-gray-400 focus:ring-0"
+                   placeholder="Enter product name" value="{{ old('name') }}" required>
           </div>
+
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Slug</label>
-            <input type="text" name="slug" placeholder="slug-produk" value="{{ old('slug') }}"
-                   class="w-full h-10 rounded-md border border-slate-300 px-3 text-sm
-                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <label class="block text-sm text-gray-600 mb-1">Slug</label>
+            <input type="text" name="slug"
+                   class="w-full rounded-md border border-gray-300 focus:border-gray-400 focus:ring-0"
+                   placeholder="product-slug" value="{{ old('slug') }}">
           </div>
         </div>
 
-        {{-- Baris 2 --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {{-- Row 2: Category / Price (sesuai mockup) --}}
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Kategori</label>
-            <select name="category_id" required
-                    class="w-full h-10 rounded-md border border-slate-300 bg-white px-3 text-sm
-                           focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-              <option value="">Pilih kategori</option>
+            <label class="block text-sm text-gray-600 mb-1">Category</label>
+            <select name="category_id"
+                    class="w-full rounded-md border border-gray-300 bg-white focus:border-gray-400 focus:ring-0" required>
+              <option value="">Select category</option>
               @foreach($categories as $cat)
                 <option value="{{ $cat->id }}" @selected(old('category_id')==$cat->id)>{{ $cat->name }}</option>
               @endforeach
             </select>
           </div>
+
           <div>
-            <label class="block text-sm text-slate-600 mb-1">Harga</label>
-            <input type="number" step="0.01" min="0" name="price" required placeholder="0.00" value="{{ old('price') }}"
-                   class="w-full h-10 rounded-md border border-slate-300 px-3 text-sm
-                          focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+            <label class="block text-sm text-gray-600 mb-1">Price</label>
+            <input type="number" step="0.01" name="price" min="0"
+                   class="w-full rounded-md border border-gray-300 focus:border-gray-400 focus:ring-0"
+                   placeholder="0.00" value="{{ old('price') }}" required>
           </div>
         </div>
 
-        {{-- Baris 3 --}}
-        <div>
-          <label class="block text-sm text-slate-600 mb-1">Stok</label>
-          <input type="number" step="1" min="0" inputmode="numeric" name="stock" value="{{ old('stock', 0) }}" required
-                 class="w-full h-10 rounded-md border border-slate-300 px-3 text-sm
-                        focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+        {{-- Row 3: Stock (baris sendiri, tidak berdampingan dengan apa pun) --}}
+        <div class="mt-4">
+          <label class="block text-sm text-gray-600 mb-1">Stock</label>
+          <input type="number" name="stock" step="1" min="0" inputmode="numeric"
+                 class="w-full rounded-md border border-gray-300 focus:border-gray-400 focus:ring-0"
+                 placeholder="0" value="{{ old('stock', 0) }}" required>
         </div>
 
-        {{-- Baris 4: Dropzone --}}
-        <div>
-          <label class="block text-sm text-slate-600 mb-2">Gambar Produk</label>
-          <label class="block w-full rounded-md border-2 border-dashed border-slate-300 hover:border-slate-400 transition cursor-pointer">
-            <div class="h-36 md:h-40 flex flex-col items-center justify-center text-center px-4">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-slate-400 mb-2" viewBox="0 0 24 24" fill="none">
-                <path stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                      d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 10l5-5 5 5M12 5v10"/>
+        {{-- Row 4: Dropzone --}}
+        <div class="mt-4">
+          <label class="block text-sm text-gray-600 mb-2">Product Image</label>
+
+          <label class="block w-full rounded-md border-2 border-dashed border-gray-300 hover:border-gray-400 transition cursor-pointer">
+            <div class="h-32 md:h-40 flex flex-col items-center justify-center text-center px-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M3 15a4 4 0 004 4h10a4 4 0 004-4m-4-6l-4-4m0 0L9 9m4-4v12"/>
               </svg>
-              <p class="text-sm text-slate-600">Klik untuk unggah atau seret & lepas</p>
-              <p class="text-xs text-slate-400">PNG, JPG maksimal 10MB</p>
+              <p class="text-sm text-gray-600">Click to upload or drag and drop</p>
+              <p class="text-xs text-gray-400">PNG, JPG up to 10MB</p>
             </div>
             <input type="file" name="image" class="hidden" accept=".png,.jpg,.jpeg">
           </label>
         </div>
 
-        {{-- Aksi --}}
-        <div class="flex items-center gap-2 pt-2">
-          <button class="h-10 px-4 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-black transition">
-            Simpan Produk
-          </button>
-          <button type="reset"
-                  class="h-10 px-4 rounded-md border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition">
-            Batal
-          </button>
+        {{-- Actions --}}
+        <div class="mt-4 flex items-center gap-2">
+          <button class="px-4 py-2 rounded-md bg-gray-900 text-white hover:bg-black">Save Product</button>
+          <a href="{{ route('admin.products.index') }}"
+             class="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">Cancel</a>
         </div>
       </form>
     </div>
-  </details>
+  </div>
 
-  {{-- ========== DAFTAR PRODUK (langsung terlihat) ========== --}}
-  <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-      <h3 class="font-semibold text-slate-800 text-lg">Daftar Produk</h3>
+  {{-- CARD: Products List --}}
+  <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
+    <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="font-semibold text-gray-800">Products List</h3>
       <form method="GET" class="flex items-center gap-2">
-        <div class="relative">
-          <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari produk..."
-                 class="peer h-10 w-56 rounded-lg border border-slate-300 bg-white px-3 pr-9 text-sm text-slate-700 placeholder:text-slate-400
-                        focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"/>
-          <svg xmlns="http://www.w3.org/2000/svg"
-               class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 peer-focus:text-emerald-500"
-               viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
-                  d="m21 21-4.3-4.3m1.8-4.7a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/>
-          </svg>
-        </div>
-        <button
-          class="h-10 px-4 rounded-lg border border-emerald-500 text-emerald-600 text-sm font-medium
-                 hover:bg-emerald-50 active:bg-emerald-100 transition">
-          Cari
-        </button>
+        <input type="text" name="q" value="{{ request('q') }}" placeholder="Search products..."
+               class="rounded border-gray-300 text-sm">
+        <button class="px-3 py-1.5 rounded border border-gray-300 text-sm">Search</button>
       </form>
     </div>
 
-    <div class="overflow-x-auto">
-      {{-- tabel produk --}}
+    <div class="p-0 overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-slate-600 sticky top-0 z-10">
+        <thead class="bg-gray-50 text-gray-600">
           <tr>
-            <th class="text-left px-5 py-3 font-semibold">Produk</th>
-            <th class="text-left px-5 py-3 font-semibold">Kategori</th>
-            <th class="text-left px-5 py-3 font-semibold">Harga</th>
-            <th class="text-left px-5 py-3 font-semibold">Stok</th>
-            <th class="text-left px-5 py-3 font-semibold">Gambar</th>
-            <th class="text-left px-5 py-3 font-semibold">Aksi</th>
+            <th class="text-left px-5 py-3">Product</th>
+            <th class="text-left px-5 py-3">Category</th>
+            <th class="text-left px-5 py-3">Price</th>
+            <th class="text-left px-5 py-3">Stock</th>
+            <th class="text-left px-5 py-3">Image</th>
+            <th class="text-left px-5 py-3">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-100">
+        <tbody class="divide-y divide-gray-100">
           @forelse($products as $p)
-            <tr class="hover:bg-slate-50/60">
+            <tr>
               <td class="px-5 py-3">
-                <div class="font-medium text-slate-900">{{ $p->name }}</div>
-                <div class="text-slate-500 text-xs">{{ $p->slug }}</div>
+                <div class="font-medium text-gray-900">{{ $p->name }}</div>
+                <div class="text-gray-500 text-xs">{{ $p->slug }}</div>
               </td>
               <td class="px-5 py-3">
-                @php $cat = optional($p->category)->name; @endphp
-                @if($cat)
-                  <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-700">
-                    {{ $cat }}
-                  </span>
-                @else
-                  <span class="text-slate-400">—</span>
-                @endif
+                {{ optional($p->category)->name ?? '—' }}
               </td>
-              <td class="px-5 py-3 font-medium text-slate-800">
+              <td class="px-5 py-3">
                 ${{ number_format($p->price, 2) }}
               </td>
               <td class="px-5 py-3">
-                <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
-                  {{ $p->stock ?? 0 }}
-                </span>
+                {{ $p->stock ?? 0 }}
               </td>
               <td class="px-5 py-3">
                 @if($p->image)
-                  <img src="{{ asset('storage/'.$p->image) }}" alt="{{ $p->name }}"
-                       class="w-12 h-12 object-cover rounded-lg border border-slate-200">
+                  <img src="{{ asset('storage/'.$p->image) }}" alt="" class="w-12 h-12 object-cover rounded border">
                 @else
-                  <span class="text-slate-400">Tidak ada gambar</span>
+                  <span class="text-gray-400">No image</span>
                 @endif
               </td>
               <td class="px-5 py-3">
                 <div class="flex items-center gap-2">
                   <a href="{{ route('admin.products.edit', $p) }}"
-                     class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700
-                            hover:bg-slate-50 active:bg-slate-100 transition">
-                    Ubah
-                  </a>
+                     class="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50">Edit</a>
+
                   <form action="{{ route('admin.products.destroy', $p) }}" method="POST"
-                        onsubmit="return confirm('Hapus produk ini?')">
+                        onsubmit="return confirm('Delete this product?')">
                     @csrf @method('DELETE')
-                    <button
-                      class="inline-flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600
-                             hover:bg-red-50 active:bg-red-100 transition">
-                      Hapus
+                    <button class="px-2 py-1 border border-red-300 text-red-600 rounded hover:bg-red-50">
+                      Delete
                     </button>
                   </form>
                 </div>
@@ -211,7 +172,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="px-5 py-8 text-center text-slate-500">Produk tidak ditemukan.</td>
+              <td colspan="6" class="px-5 py-6 text-center text-gray-500">No products found.</td>
             </tr>
           @endforelse
         </tbody>
@@ -219,7 +180,7 @@
     </div>
 
     @if($products->hasPages())
-      <div class="px-5 py-3 border-t border-slate-200 bg-white">
+      <div class="px-5 py-3 border-t border-gray-100">
         {{ $products->links() }}
       </div>
     @endif

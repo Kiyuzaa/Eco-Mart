@@ -110,40 +110,34 @@
     </div>
   </section>
 
-  {{-- TIM KAMI (2 orang) --}}
-  <section class="py-10 border-t">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-2xl font-bold">Tim Kami</h2>
-      <p class="text-slate-600">Orang-orang di balik EcoMart.</p>
+  {{-- TIM KAMI --}}
+<section class="py-10 border-t">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold">Tim Kami</h2>
+    <p class="text-slate-600">Orang-orang di balik EcoMart.</p>
 
-      @php
-        $team = [
-          [
-            'name' => 'Eza Fadlan Maulana',
-            'role' => 'CEO & Founder',
-            'img'  => 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=800&auto=format&fit=crop',
-          ],
-          [
-            'name' => 'Zakiyuddi Muhammad Syafiq',
-            'role' => 'CTO & Co-Founder',
-            'img'  => 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?q=80&w=800&auto=format&fit=crop',
-          ],
-        ];
-      @endphp
+    <div class="mt-6 grid grid-cols-2 md:grid-cols-2 gap-5">
+      <div class="rounded-2xl border bg-white overflow-hidden">
+        <img src="{{ asset('images/team/eza.jpg') }}" alt="Foto Eza Fadlan Maulana"
+             class="w-full h-56 object-cover" loading="lazy">
+        <div class="p-4">
+          <div class="font-semibold">Eza Fadlan Maulana</div>
+          <div class="text-sm text-slate-600">Web Developer</div>
+        </div>
+      </div>
 
-      <div class="mt-6 grid grid-cols-2 md:grid-cols-2 gap-5">
-        @foreach($team as $m)
-          <div class="rounded-2xl border bg-white overflow-hidden">
-            <img src="{{ $m['img'] }}" alt="Foto {{ $m['name'] }}" class="w-full h-56 object-cover">
-            <div class="p-4">
-              <div class="font-semibold">{{ $m['name'] }}</div>
-              <div class="text-sm text-slate-600">{{ $m['role'] }}</div>
-            </div>
-          </div>
-        @endforeach
+      <div class="rounded-2xl border bg-white overflow-hidden">
+        <img src="{{ asset('images/team/zaki.jpg') }}" alt="Foto Zakiyuddin Muhammad Syafiq"
+             class="w-full h-56 object-cover" loading="lazy">
+        <div class="p-4">
+          <div class="font-semibold">Zakiyuddin Muhammad Syafiq</div>
+          <div class="text-sm text-slate-600">Web Developer</div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
+
 
   {{-- LINIMASA --}}
   <section class="py-10">

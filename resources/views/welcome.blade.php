@@ -84,7 +84,7 @@
     </div>
   </section>
 
-  {{-- KATEGORI (otomatis 4 dari database) --}}
+  {{-- KATEGORI (fixed 4 dari database + link ke produk) --}}
   <section class="py-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-end justify-between gap-4">
@@ -92,6 +92,7 @@
           <h2 class="text-2xl font-bold text-slate-900">Belanja per Kategori</h2>
           <p class="text-slate-600">Empat kategori utama dari katalog kami.</p>
         </div>
+        @php $productsUrl = $productsUrl ?? (Route::has('product.index') ? route('product.index') : url('/product')); @endphp
         <a href="{{ $productsUrl }}"
            class="hidden sm:inline-flex items-center rounded-xl border px-4 py-2 text-emerald-800 border-emerald-700 hover:bg-emerald-50">
           Lihat Semua
@@ -99,36 +100,50 @@
       </div>
 
       @php
-        use Illuminate\Support\Facades\Route as R;
         use Illuminate\Support\Str;
-        // Ambil dari controller kalau ada ($categories). Jika tidak, ambil 4 dari DB.
-        $cats = isset($categories) ? $categories : (\App\Models\Category::query()->latest()->take(4)->get() ?? collect());
+
+        // Urutan kategori yang diinginkan (sesuai seeder)
+        $desired = ['Toys', 'Fashion', 'Health & Beauty', 'Books'];
+
+        // Ambil dari DB berdasarkan "name"
+        $fromDb = \App\Models\Category::query()
+                  ->whereIn('name', $desired)
+                  ->get()
+                  ->keyBy('name');
+
+        // Bangun kartu sesuai urutan $desired
+        $cards = collect($desired)->map(function ($name) use ($fromDb) {
+            $row  = $fromDb->get($name);
+            // Seeder membuat slug unik: Str::slug($name) . '-' . ($i+1)
+            $slug = $row ? $row->slug : Str::slug($name);
+            // Gambar default per kategori (ganti ke asset() jika punya gambar lokal)
+            $img = match ($name) {
+                'Toys'             => 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?q=80&w=800&auto=format&fit=crop',
+                'Fashion'          => 'https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=800&auto=format&fit=crop',
+                'Health & Beauty'  => 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop',
+                'Books'            => 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?q=80&w=800&auto=format&fit=crop',
+                default            => 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop',
+            };
+            // URL ke halaman produk dengan filter category=slug
+            $url = (Route::has('product.index'))
+                ? route('product.index', ['category' => $slug])
+                : url('/product?category=' . $slug);
+
+            return compact('name', 'slug', 'img', 'url');
+        });
       @endphp
 
       <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-5">
-        @forelse($cats as $c)
-          @php
-            $label = data_get($c,'name','Kategori');
-            $slug  = data_get($c,'slug', Str::slug($label));
-            $img   = data_get($c,'image_url') ?? data_get($c,'image')
-                   ?? 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop';
-            $url   = R::has('category.show') ? route('category.show', $slug)
-                  : (R::has('product.index') ? route('product.index', ['category'=>$slug]) : url('/product?category='.$slug));
-          @endphp
-
-          <a href="{{ $url }}" class="group rounded-2xl overflow-hidden border bg-white hover:shadow-md transition">
+        @foreach($cards as $c)
+          <a href="{{ $c['url'] }}" class="group rounded-2xl overflow-hidden border bg-white hover:shadow-md transition">
             <div class="aspect-[4/3] overflow-hidden">
-              <img src="{{ $img }}" alt="{{ $label }}"
+              <img src="{{ $c['img'] }}" alt="{{ $c['name'] }}"
                    class="w-full h-full object-cover group-hover:scale-105 transition"
                    onerror="this.src='https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop'">
             </div>
-            <div class="p-3 text-center font-medium text-slate-800">{{ $label }}</div>
+            <div class="p-3 text-center font-medium text-slate-800">{{ $c['name'] }}</div>
           </a>
-        @empty
-          <div class="col-span-2 sm:col-span-4 rounded-2xl border bg-white p-6 text-center">
-            <p class="text-slate-600">Kategori belum tersedia.</p>
-          </div>
-        @endforelse
+        @endforeach
       </div>
     </div>
   </section>
@@ -188,7 +203,7 @@
               <li class="flex items-center gap-3">
                 <span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
                   {{-- mail icon --}}
-                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16a2 2 0 012 2v.4l-10 6.25L2 8.4V8a2 2 0 012-2Zm18 4.35V16a2 2 0 01-2 2H4a2 2 0 01-2-2v-5.65l9.24 5.78a2 2 0 002.04 0L22 10.35Z"/></svg>
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16a2 2 0 012 2v.4l-10 6.25L2 8.4V8a2 2 0 012-2Zm18 4.35V16a2 2 0 01-2 2H4a2 2 0 01-2-2v-5.65l9.24 5.78a 2 2 0 002.04 0L22 10.35Z"/></svg>
                 </span>
                 support@ecomart.local
               </li>

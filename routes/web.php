@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+
+// Controllers
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
@@ -10,8 +12,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AiChatController;
-use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\CustomerController;
 
 /*
@@ -20,19 +23,19 @@ use App\Http\Controllers\Admin\CustomerController;
 |--------------------------------------------------------------------------
 */
 
-// Auth routes (login, register, password, dll)
+// Auth routes (login, register, password reset, dll)
 Auth::routes();
 
-// Halaman Utama & Statis
-Route::get('/', fn() => app(HomeController::class)->index())->name('home');
+// Halaman utama & statis
+Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::view('/about', 'about')->name('about');
 
-// Publik: Produk & Kategori
+// Produk & kategori (publik)
 Route::get('/product', [ProductController::class, 'index'])->name('product.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/categories/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
 
-// Publik: AI Bot & Kontak
+// AI Bot & Kontak (publik)
 Route::view('/ai-bot', 'ai-bot')->name('ai.bot');
 Route::get('/chat', [AiChatController::class, 'index'])->name('chat.index');
 Route::post('/chat', [AiChatController::class, 'send'])->name('chat.send');
@@ -40,14 +43,17 @@ Route::post('/chat', [AiChatController::class, 'send'])->name('chat.send');
 Route::view('/contact', 'contact')->name('contact');
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
-// Butuh login
+// -----------------------------
+// Grup route butuh login (auth)
+// -----------------------------
 Route::middleware('auth')->group(function () {
+
     // Profil
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
-    // Wishlist (hapus duplikasi toggle)
+    // Wishlist
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist');
     Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::delete('/wishlist/{product}', [WishlistController::class, 'destroy'])->name('wishlist.destroy');
@@ -61,27 +67,29 @@ Route::middleware('auth')->group(function () {
     Route::delete('/cart/{item}', [CartController::class, 'destroy'])->name('cart.remove');
     Route::post('/cart/apply-code', [CartController::class, 'applyCode'])->name('cart.apply-code');
 
-    // Checkout — SESUAI controller kamu: show() & place()
-    // Checkout — pakai nama 'checkout' (bukan 'checkout.show')
-Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
-Route::post('/checkout/place', [CheckoutController::class, 'place'])->name('checkout.place');
+    // Checkout
+    Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
+    Route::post('/checkout/place', [CheckoutController::class, 'place'])->name('checkout.place');
 
-Route::get('/orders/{order}/waiting', [CheckoutController::class, 'waiting'])->name('order.waiting');
-Route::get('/orders/{order}', [OrderController::class, 'show'])
-        ->name('orders.show');   
+    // Orders
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');             // daftar pesanan
+    Route::get('/orders/{order}/waiting', [CheckoutController::class, 'waiting'])->name('orders.waiting'); // status menunggu
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');      // detail pesanan
 
-
-    // (Opsional) halaman sukses sederhana jika kamu memang punya view-nya
-    Route::view('/order/success', 'orders.success')->name('order.success');
+    // Halaman sukses (opsional, jika punya view-nya)
+    Route::view('/orders/success', 'orders.success')->name('orders.success');
 });
 
-// Admin
+// -----------------------------
+// Admin area (auth + role:admin)
+// -----------------------------
 Route::middleware(['auth','role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/', [AdminProductController::class, 'index'])->name('dashboard');
 
+        // Customers
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/{user}', [CustomerController::class, 'show'])->name('customers.show');
 
