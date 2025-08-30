@@ -26,51 +26,52 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  {{-- NAVBAR --}}
   <x-navbar />
-
-  {{-- STEPPER --}}
   <x-checkout-steps current="checkout" />
 
   <main class="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    {{-- KIRI: FORM CHECKOUT --}}
-    <form id="checkout-form" action="{{ route('checkout.place') }}" method="POST" class="card p-5 space-y-5 lg:col-span-2">
+    <form id="checkout-form" action="{{ route('checkout.place') }}" method="POST" class="card p-5 space-y-5 lg:col-span-2" novalidate>
       @csrf
 
       <h2 class="text-lg font-semibold text-emerald-900">Data Pengiriman</h2>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="label" for="name">Nama Lengkap</label>
-          <input id="name" name="name" class="ipt" placeholder="Masukkan nama lengkap" value="{{ old('name') }}" required>
+          <label class="label" for="name">Nama Lengkap <span class="text-red-600">*</span></label>
+          <input id="name" name="name" class="ipt" placeholder="Masukkan nama lengkap" value="{{ old('name', $user->name) }}" required>
           @error('name')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
         </div>
         <div>
-          <label class="label" for="phone">Nomor Telepon</label>
-          <input id="phone" name="phone" class="ipt" placeholder="+62 812 3456 7890" value="{{ old('phone') }}" required>
+          <label class="label" for="phone">Nomor Telepon <span class="text-red-600">*</span></label>
+          <input id="phone" name="phone" class="ipt" placeholder="+62 812 3456 7890" value="{{ old('phone', $user->phone) }}" required>
           @error('phone')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
         </div>
         <div class="sm:col-span-2">
-          <label class="label" for="shipping_address">Alamat Lengkap</label>
+          <label class="label" for="shipping_address">Alamat Lengkap <span class="text-red-600">*</span></label>
           <textarea id="shipping_address" name="shipping_address" class="ipt" rows="3" placeholder="Nama jalan, RT/RW, kecamatan, kota/kabupaten, provinsi" required>{{ old('shipping_address') }}</textarea>
           @error('shipping_address')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
         </div>
-        {{-- Opsional UI --}}
+
         <div>
-          <label class="label" for="city_ui">Kota</label>
-          <input id="city_ui" name="city_ui" class="ipt" placeholder="Kota" value="{{ old('city_ui') }}">
+          <label class="label" for="city_ui">Kota <span class="text-red-600">*</span></label>
+          <input id="city_ui" name="city_ui" class="ipt" placeholder="Kota" value="{{ old('city_ui') }}" required>
+          @error('city_ui')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
         </div>
         <div>
-          <label class="label" for="postal_ui">Kode Pos</label>
-          <input id="postal_ui" name="postal_ui" class="ipt" placeholder="12345" value="{{ old('postal_ui') }}">
+          <label class="label" for="postal_ui">Kode Pos <span class="text-red-600">*</span></label>
+          <input id="postal_ui" name="postal_ui" class="ipt" placeholder="12345" value="{{ old('postal_ui') }}"
+                 inputmode="numeric" pattern="\d{5}" minlength="5" maxlength="5" required>
+          <div class="text-xs text-gray-500 mt-1">Masukkan 5 digit angka.</div>
+          @error('postal_ui')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
         </div>
       </div>
 
+      {{-- Opsi Pengiriman --}}
       <div class="space-y-3">
         <div class="label">Opsi Pengiriman</div>
         <label class="radio justify-between">
           <span class="flex items-center gap-3">
-            <input type="radio" name="shipping_method" value="regular" {{ old('shipping_method','regular')==='regular'?'checked':'' }}>
+            <input type="radio" name="shipping_method" value="regular" {{ old('shipping_method','regular')==='regular'?'checked':'' }} required>
             <span>
               <div class="font-medium">Reguler (3–5 hari)</div>
               <div class="text-sm text-gray-500">Rp 15.000</div>
@@ -79,7 +80,7 @@
         </label>
         <label class="radio justify-between">
           <span class="flex items-center gap-3">
-            <input type="radio" name="shipping_method" value="express" {{ old('shipping_method')==='express'?'checked':'' }}>
+            <input type="radio" name="shipping_method" value="express" {{ old('shipping_method')==='express'?'checked':'' }} required>
             <span>
               <div class="font-medium">Express (1–2 hari)</div>
               <div class="text-sm text-gray-500">Rp 25.000</div>
@@ -89,24 +90,74 @@
         @error('shipping_method')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
       </div>
 
+      {{-- Metode Pembayaran --}}
       <div class="space-y-3">
-        <div class="label">Metode Pembayaran</div>
-        <label class="radio">
-          <input type="radio" name="payment_method" value="bank_transfer" {{ old('payment_method','bank_transfer')==='bank_transfer'?'checked':'' }}>
-          <span class="font-medium">Transfer Bank</span>
+        <div class="label">Metode Pembayaran <span class="text-red-600">*</span></div>
+
+        <label class="radio justify-between">
+          <span class="flex items-center gap-3">
+            <input type="radio" name="payment_method" value="bank_transfer"
+                   {{ old('payment_method','bank_transfer')==='bank_transfer'?'checked':'' }} required>
+            <span>
+              <div class="font-medium">Bank Transfer</div>
+              <div class="text-sm text-gray-500">BCA • BNI • BRI • Mandiri</div>
+            </span>
+          </span>
         </label>
-        <label class="radio">
-          <input type="radio" name="payment_method" value="ewallet" {{ old('payment_method')==='ewallet'?'checked':'' }}>
-          <span class="font-medium">E-Wallet</span>
+
+        <label class="radio justify-between">
+          <span class="flex items-center gap-3">
+            <input type="radio" name="payment_method" value="ewallet"
+                   {{ old('payment_method')==='ewallet'?'checked':'' }} required>
+            <span>
+              <div class="font-medium">E-Wallet</div>
+              <div class="text-sm text-gray-500">Dana • OVO • GoPay • ShopeePay</div>
+            </span>
+          </span>
         </label>
-        <label class="radio">
-          <input type="radio" name="payment_method" value="cod" {{ old('payment_method')==='cod'?'checked':'' }}>
-          <span class="font-medium">Bayar di Tempat (COD)</span>
+
+        <label class="radio justify-between">
+          <span class="flex items-center gap-3">
+            <input type="radio" name="payment_method" value="cod"
+                   {{ old('payment_method')==='cod'?'checked':'' }} required>
+            <span>
+              <div class="font-medium">COD (Bayar di Tempat)</div>
+              <div class="text-sm text-gray-500">Bayar saat barang diterima</div>
+            </span>
+          </span>
         </label>
+
         @error('payment_method')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
       </div>
 
-      {{-- Tombol pada layar kecil --}}
+      {{-- Gunakan Poin --}}
+      @php
+        $availablePoints = (int) (auth()->user()->available_points ?? 0);
+        $minRedeem = (int) config('ecomart.points.min_redeem', 100);
+        $conversion= (int) config('ecomart.points.conversion_value', 100);
+        $maxPct    = (int) config('ecomart.points.max_percentage_discount', 50);
+      @endphp
+
+      <div class="space-y-2">
+        <div class="label">Gunakan Poin</div>
+        @if($availablePoints > 0)
+          <div class="flex items-start gap-3">
+            <input type="number" name="redeem_points" id="redeem_points"
+                   class="ipt w-40"
+                   min="0" step="{{ $minRedeem }}" max="{{ $availablePoints }}"
+                   value="{{ old('redeem_points', 0) }}" placeholder="0">
+            <div class="text-sm text-gray-500">
+              Poin tersedia: <span class="font-semibold">{{ number_format($availablePoints,0,',','.') }}</span><br>
+              {{ $minRedeem }} poin = Rp{{ number_format($minRedeem*$conversion,0,',','.') }}<br>
+              Maks diskon: {{ $maxPct }}% dari total belanja
+            </div>
+          </div>
+          @error('redeem_points')<div class="text-red-600 text-sm mt-1">{{ $message }}</div>@enderror
+        @else
+          <div class="text-sm text-gray-500">Kamu belum memiliki poin untuk ditukarkan.</div>
+        @endif
+      </div>
+
       <div class="lg:hidden">
         <button class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-3 rounded-lg">
           🔒 Bayar Sekarang
@@ -115,7 +166,7 @@
       </div>
     </form>
 
-    {{-- KANAN: RINGKASAN --}}
+    {{-- Ringkasan Pesanan --}}
     <aside class="card p-5 space-y-4 h-fit">
       <h2 class="text-lg font-semibold text-emerald-900">Ringkasan Pesanan</h2>
 
@@ -139,70 +190,25 @@
       </div>
 
       <div class="space-y-2 text-sm">
-        <div class="flex justify-between">
-          <span>Subtotal</span>
-          <span id="subtotal-text">Rp {{ number_format($subtotal,0,',','.') }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span>Ongkos Kirim</span>
-          <span id="shipping-text" data-regular="15000" data-express="25000">
-            Rp {{ number_format($shippingCost,0,',','.') }}
-          </span>
-        </div>
-        <div class="flex justify-between">
-          <span>Pajak</span>
-          <span id="tax-text">Rp {{ number_format($tax,0,',','.') }}</span>
-        </div>
+        <div class="flex justify-between"><span>Subtotal</span><span>Rp {{ number_format($subtotal,0,',','.') }}</span></div>
+        <div class="flex justify-between"><span>Ongkos Kirim</span><span>Rp {{ number_format($shippingCost,0,',','.') }}</span></div>
+        <div class="flex justify-between"><span>Pajak</span><span>Rp {{ number_format($tax,0,',','.') }}</span></div>
+        <div class="flex justify-between"><span>Diskon Kupon</span><span>- Rp {{ number_format($discount,0,',','.') }}</span></div>
+        <div class="flex justify-between"><span>Diskon Poin</span><span id="points-discount">—</span></div>
         <div class="flex justify-between font-semibold text-base pt-2 border-t">
           <span>Total</span>
-          <span id="total-text"
-                data-subtotal="{{ (int)$subtotal }}"
-                data-tax="{{ (int)$tax }}">Rp {{ number_format($total,0,',','.') }}</span>
+          <span>Rp {{ number_format($total,0,',','.') }}</span>
         </div>
       </div>
 
-      {{-- Tombol submit (menyasar form kiri) --}}
       <button form="checkout-form"
               class="w-full bg-emerald-700 text-white py-3 rounded-lg hover:bg-emerald-800 font-semibold flex items-center justify-center gap-2">
-        {{-- Ikon gembok --}}
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-             stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M16.5 10.5V7.5a4.5 4.5 0 10-9 0v3m-.75 0h10.5a.75.75 0 01.75.75v7.5A2.25 2.25 0 0115.75 21H8.25A2.25 2.25 0 016 18.75v-7.5a.75.75 0 01.75-.75z" />
-        </svg>
         Bayar Sekarang
       </button>
       <div class="text-[11px] text-gray-500 text-center">Pembayaran aman dan terenkripsi</div>
     </aside>
   </main>
 
-  <footer class="text-center text-gray-400 py-8 border-t">
-    © {{ date('Y') }} EcoMart. Semua hak dilindungi.
-  </footer>
-
-  {{-- Sinkronkan total saat opsi pengiriman berubah --}}
-  <script>
-    (function(){
-      const shipText  = document.getElementById('shipping-text');
-      const totalText = document.getElementById('total-text');
-      if (!shipText || !totalText) return;
-
-      const radios = document.querySelectorAll('input[name="shipping_method"]');
-      const fmt = (n)=> new Intl.NumberFormat('id-ID').format(n);
-      const baseSubtotal = parseInt(totalText.dataset.subtotal || '0', 10);
-      const baseTax      = parseInt(totalText.dataset.tax || '0', 10);
-
-      function updateTotal() {
-        const sel  = document.querySelector('input[name="shipping_method"]:checked')?.value || 'regular';
-        const ship = parseInt(shipText.dataset[sel] || '0', 10);
-        shipText.textContent  = 'Rp ' + fmt(ship);
-        const total = baseSubtotal + baseTax + ship;
-        totalText.textContent = 'Rp ' + fmt(total);
-      }
-
-      radios.forEach(r => r.addEventListener('change', updateTotal));
-      updateTotal();
-    })();
-  </script>
+  <x-footer />
 </body>
 </html>

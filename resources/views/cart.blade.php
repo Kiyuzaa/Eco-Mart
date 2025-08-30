@@ -3,10 +3,8 @@
 @section('title','Keranjang — EcoMart')
 
 @section('content')
-  {{-- Stepper tepat di bawah navbar --}}
   <x-checkout-steps current="cart" />
 
-  {{-- Breadcrumb --}}
   <nav class="text-sm text-gray-500 mb-6 mt-4">
     <ol class="flex items-center gap-2">
       <li><a href="{{ route('home') }}" class="hover:underline">Beranda</a></li>
@@ -21,7 +19,6 @@
   <p class="text-gray-600 mb-6">Tinjau item kamu sebelum melanjutkan ke pembayaran.</p>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    {{-- LEFT: Items --}}
     <div class="lg:col-span-2 space-y-4">
       @php $hasItems = isset($items) && count($items); @endphp
 
@@ -32,21 +29,24 @@
             $unit = (float)($p->price ?? 0);
             $qty  = (int)$item->quantity;
             $line = $unit * $qty;
+            $img = $p->image;
+            if (!$img) {
+              $img = 'https://via.placeholder.com/160x160';
+            } elseif (!filter_var($img, FILTER_VALIDATE_URL)) {
+              $img = asset('storage/'.$img);
+            }
           @endphp
 
           <div class="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div class="flex items-center gap-4">
                 <a href="{{ route('products.show', ['product'=>$p->slug]) }}" class="w-16 h-16 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
-                  <img src="{{ $p->image ?? 'https://via.placeholder.com/160x160' }}"
-                       alt="{{ $p->name }}" class="object-cover w-full h-full">
+                  <img src="{{ $img }}" alt="{{ $p->name }}" class="object-cover w-full h-full">
                 </a>
                 <div>
                   <a href="{{ route('products.show', ['product'=>$p->slug]) }}" class="font-medium text-gray-900 hover:text-emerald-800">
                     {{ $p->name }}
                   </a>
-                  {{-- atribut opsional: ukuran/warna kalau ada --}}
-                  {{-- <p class="text-xs text-gray-500">Ukuran: M, Warna: Natural</p> --}}
                   <p class="text-sm text-gray-600">
                     {{ $p->category?->name ?? 'Tanpa Kategori' }} ·
                     <span class="font-medium text-gray-900">Rp {{ number_format($unit,0,',','.') }}</span>
@@ -55,27 +55,19 @@
               </div>
 
               <div class="flex items-center gap-4 sm:justify-end">
-                {{-- Kontrol jumlah --}}
                 <div class="flex items-center gap-2">
-                  {{-- Kurangi --}}
                   <form action="{{ route('cart.update',$item) }}" method="POST">
                     @csrf @method('PATCH')
                     <input type="hidden" name="action" value="dec">
-                    <button
-                      class="w-8 h-8 rounded border flex items-center justify-center hover:bg-gray-50 disabled:opacity-40"
-                      title="Kurangi" {{ $qty <= 1 ? 'disabled' : '' }}>−</button>
+                    <button class="w-8 h-8 rounded border flex items-center justify-center hover:bg-gray-50 disabled:opacity-40" title="Kurangi" {{ $qty <= 1 ? 'disabled' : '' }}>−</button>
                   </form>
 
-                  {{-- Set jumlah langsung (auto submit saat berubah) --}}
                   <form action="{{ route('cart.update',$item) }}" method="POST" class="w-14 qty-set-form">
                     @csrf @method('PATCH')
                     <input type="hidden" name="action" value="set">
-                    <input name="quantity" type="number" min="1"
-                           value="{{ $qty }}"
-                           class="w-full h-9 text-center border rounded qty-input focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                    <input name="quantity" type="number" min="1" value="{{ $qty }}" class="w-full h-9 text-center border rounded qty-input focus:outline-none focus:ring-2 focus:ring-emerald-600">
                   </form>
 
-                  {{-- Tambah --}}
                   <form action="{{ route('cart.update',$item) }}" method="POST">
                     @csrf @method('PATCH')
                     <input type="hidden" name="action" value="inc">
@@ -87,13 +79,11 @@
                   Rp {{ number_format($line,0,',','.') }}
                 </div>
 
-                {{-- Hapus --}}
                 <form action="{{ route('cart.remove',$item) }}" method="POST" onsubmit="return confirm('Hapus item ini dari keranjang?')">
                   @csrf @method('DELETE')
                   <button class="text-gray-400 hover:text-red-600" title="Hapus">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8a1 1 0 001-1V5a1 1 0 00-1-1h-3m-4 0H8a1 1 0 00-1 1v1"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0h8a1 1 0 001-1V5a1 1 0 00-1-1h-3m-4 0H8a1 1 0 00-1 1v1"/>
                     </svg>
                   </button>
                 </form>
@@ -102,20 +92,17 @@
           </div>
         @endforeach
       @else
-        {{-- Empty state --}}
         <div class="bg-white border rounded-xl p-10 text-center text-gray-600">
           <div class="mx-auto w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center mb-4">🛒</div>
           <h3 class="font-semibold text-lg text-emerald-900">Keranjang kamu kosong</h3>
           <p class="text-sm mt-1">Jelajahi produk ramah lingkungan dan mulai tambahkan ke keranjang.</p>
-          <a href="{{ route('product.index') }}"
-             class="inline-block mt-4 px-4 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
+          <a href="{{ route('product.index') }}" class="inline-block mt-4 px-4 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800">
             Belanja Sekarang
           </a>
         </div>
       @endif
     </div>
 
-    {{-- RIGHT: Ringkasan (sticky) --}}
     <aside class="lg:sticky lg:top-20 border rounded-xl p-6 bg-white h-fit shadow-sm">
       <h3 class="text-lg font-semibold mb-4 text-emerald-900">Ringkasan Pesanan</h3>
 
@@ -129,7 +116,7 @@
           <span>{{ ($shipping ?? 0) > 0 ? 'Rp '.number_format($shipping,0,',','.') : 'Gratis' }}</span>
         </div>
 
-        @if( isset($discount) && $discount>0 )
+        @if(isset($discount) && $discount>0)
           <div class="flex justify-between text-emerald-700">
             <span>Diskon ({{ session('cart_code') }})</span>
             <span>- Rp {{ number_format($discount,0,',','.') }}</span>
@@ -152,39 +139,15 @@
         </span>
       </div>
 
-      <a href="{{ route('checkout') }}"
-         class="block w-full text-center bg-emerald-700 text-white py-3 rounded-lg mt-4 hover:bg-emerald-800">
+      <a href="{{ route('checkout') }}" class="block w-full text-center bg-emerald-700 text-white py-3 rounded-lg mt-4 hover:bg-emerald-800">
         Lanjut ke Pembayaran
       </a>
-      <a href="{{ route('product.index') }}"
-         class="block text-center text-sm text-gray-600 hover:underline mt-2">
+      <a href="{{ route('product.index') }}" class="block text-center text-sm text-gray-600 hover:underline mt-2">
         Lanjut Belanja
       </a>
     </aside>
   </div>
 
-  {{-- Rekomendasi --}}
-  <section class="mt-12">
-    <h3 class="text-lg font-semibold mb-6 text-emerald-900">Mungkin kamu suka</h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-      @foreach(($recommend ?? []) as $product)
-        <x-product-card :product="$product"/>
-      @endforeach
-
-      @if(empty($recommend) || !count($recommend))
-        @for($i=0;$i<4;$i++)
-          <x-product-card :product="[
-            'title' => 'Produk',
-            'category' => 'Eco',
-            'price' => 0,
-            'image' => 'https://via.placeholder.com/600x400'
-          ]"/>
-        @endfor
-      @endif
-    </div>
-  </section>
-
-  {{-- Auto-submit qty setter --}}
   <script>
     document.querySelectorAll('.qty-input').forEach(inp => {
       inp.addEventListener('change', (e) => {
