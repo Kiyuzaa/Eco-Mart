@@ -77,6 +77,36 @@ class ProductController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'        => 'required|string|max:255',
+            'slug'        => 'required|string|max:255|unique:products,slug',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
+            'category_id' => 'required|exists:categories,id',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg|max:10240', // 10MB
+        ]);
+
+        $path = null;
+        if ($request->hasFile('image')) {
+            // simpan ke storage/app/public/products
+            $path = $request->file('image')->store('products', 'public');
+        }
+
+        Product::create([
+            'name'        => $request->name,
+            'slug'        => $request->slug,
+            'price'       => $request->price,
+            'stock'       => $request->stock,
+            'category_id' => $request->category_id,
+            'image'       => $path,
+        ]);
+
+        return redirect()->route('admin.products.index')
+                         ->with('success','Produk berhasil ditambahkan!');
+    }
+
     public function show(Product $product)
     {
         // Kumpulan gambar: storage('image') -> image_url -> placeholder
