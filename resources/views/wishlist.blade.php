@@ -1,79 +1,79 @@
 {{-- resources/views/wishlist.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'My Wishlist — EcoMart')
+@section('title', 'Daftar Keinginan — EcoMart')
 
 @section('content')
 <div class="max-w-6xl mx-auto px-4 py-8">
   {{-- Breadcrumb --}}
-  <nav class="text-sm text-slate-500 mb-6">
+  <nav class="text-sm text-gray-500 mb-6">
     <ol class="flex items-center gap-2">
-      <li><a href="{{ url('/') }}" class="hover:underline">Home</a></li>
+      <li><a href="{{ url('/') }}" class="hover:underline">Beranda</a></li>
       <li>›</li>
-      <li class="text-slate-700 font-medium">Wishlist</li>
+      <li class="text-gray-800 font-medium">Daftar Keinginan</li>
     </ol>
   </nav>
 
   {{-- Heading --}}
   <div class="text-center mb-8">
-    <h1 class="text-3xl font-bold text-slate-800">My Wishlist <span class="align-middle">🖤</span></h1>
-    <p class="text-slate-500 mt-2">Keep track of your favorite eco-friendly products</p>
+    <h1 class="text-3xl font-bold text-emerald-900">Daftar Keinginan <span class="align-middle">🖤</span></h1>
+    <p class="text-gray-600 mt-2">Pantau produk ramah lingkungan favoritmu.</p>
   </div>
 
   @if($products->count() === 0)
     {{-- Empty State --}}
-    <div class="bg-white border border-slate-200 rounded-xl p-10 text-center">
+    <div class="bg-white border rounded-xl p-10 text-center">
       <div class="text-5xl mb-3">🌿</div>
-      <h3 class="text-xl font-semibold text-slate-800">Your wishlist is empty</h3>
-      <p class="text-slate-500 mt-1">Browse eco-friendly items and save them for later.</p>
+      <h3 class="text-xl font-semibold text-emerald-900">Wishlist kamu masih kosong</h3>
+      <p class="text-gray-600 mt-1">Jelajahi item ramah lingkungan dan simpan untuk nanti.</p>
       <a href="{{ route('product.index') }}"
-         class="inline-flex items-center mt-6 px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700">
-        Browse Products
+         class="inline-flex items-center mt-6 px-4 py-2 rounded-lg bg-emerald-700 text-white font-medium hover:bg-emerald-800">
+        Jelajahi Produk
       </a>
     </div>
   @else
     {{-- Toolbar Top --}}
-    <div class="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+    <div class="bg-white border rounded-xl p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div class="flex items-center gap-4">
-        <span class="text-slate-600">{{ $products->total() }} items</span>
+        <span class="text-gray-600">{{ $products->total() }} produk</span>
         <label class="inline-flex items-center gap-2 select-none">
-          <input id="selectAll" type="checkbox" class="rounded border-slate-300">
-          <span class="text-slate-700">Select All</span>
+          <input id="selectAll" type="checkbox" class="rounded border-gray-300">
+          <span class="text-gray-800">Pilih Semua</span>
         </label>
       </div>
 
       <div class="flex items-center gap-3">
         {{-- Sort --}}
         <form method="GET" action="{{ route('wishlist') }}">
-          <select name="sort" class="rounded-lg border-slate-300 text-slate-700 text-sm"
+          <select name="sort" class="rounded-lg border-gray-300 text-gray-800 text-sm"
                   onchange="this.form.submit()">
-            <option value="newest"     {{ ($sort ?? request('sort','newest'))==='newest'?'selected':'' }}>Sort by: Newest</option>
-            <option value="price-asc"  {{ ($sort ?? request('sort'))==='price-asc'?'selected':'' }}>Price: Low to High</option>
-            <option value="price-desc" {{ ($sort ?? request('sort'))==='price-desc'?'selected':'' }}>Price: High to Low</option>
-            <option value="eco-desc"   {{ ($sort ?? request('sort'))==='eco-desc'?'selected':'' }}>Eco Score: Best</option>
+            <option value="newest"     {{ ($sort ?? request('sort','newest'))==='newest'?'selected':'' }}>Urutkan: Terbaru</option>
+            <option value="price-asc"  {{ ($sort ?? request('sort'))==='price-asc'?'selected':'' }}>Harga: Rendah → Tinggi</option>
+            <option value="price-desc" {{ ($sort ?? request('sort'))==='price-desc'?'selected':'' }}>Harga: Tinggi → Rendah</option>
+            <option value="eco-desc"   {{ ($sort ?? request('sort'))==='eco-desc'?'selected':'' }}>Skor Eco: Tertinggi</option>
           </select>
         </form>
 
-        {{-- Bulk Actions --}}
+        {{-- Aksi Massal --}}
         <div class="flex items-center gap-2">
-          {{-- Bulk Add to Cart --}}
+          {{-- Tambahkan terpilih ke keranjang --}}
           <form id="bulkAddForm" action="{{ route('wishlist.bulkAddToCart') }}" method="POST">
             @csrf
             <button type="submit"
-              class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50"
+              class="px-4 py-2 rounded-lg bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800 disabled:opacity-50"
               data-bulk="add" disabled>
-              Add Selected to Cart
+              Tambahkan ke Keranjang
             </button>
           </form>
 
-          {{-- Bulk Remove --}}
+          {{-- Hapus terpilih --}}
           <form id="bulkRemoveForm" action="{{ route('wishlist.bulk-remove') }}" method="POST">
             @csrf
             @method('DELETE')
             <button type="submit"
-              class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
+              class="px-4 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
               data-bulk="remove" disabled>
-              Remove Selected
+              Hapus Terpilih
             </button>
           </form>
         </div>
@@ -84,76 +84,76 @@
     <form id="wishlistGridForm" onsubmit="return false">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach($products as $p)
-          <div class="bg-white border border-slate-200 rounded-xl overflow-hidden relative">
+          <div class="bg-white border rounded-2xl overflow-hidden relative flex flex-col">
             {{-- Checkbox per item (pojok kiri atas) --}}
             <label class="absolute top-2 left-2 z-10 bg-white/90 backdrop-blur px-2 py-1 rounded-md shadow border flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" name="ids[]" value="{{ $p->id }}" class="rowCheck rounded border-slate-300">
-              <span class="text-xs text-slate-700">Select</span>
+              <input type="checkbox" name="ids[]" value="{{ $p->id }}" class="rowCheck rounded border-gray-300">
+              <span class="text-xs text-gray-700">Pilih</span>
             </label>
 
             {{-- Gambar / placeholder --}}
             @php
               $img = data_get($p, 'image')
                   ?? data_get($p, 'image_url')
-                  ?? 'https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop';
+                  ?? 'https://via.placeholder.com/600x400';
             @endphp
-            <div class="h-40 bg-slate-200">
-              <img src="{{ $img }}" alt="{{ e(data_get($p,'name') ?? data_get($p,'title','Product')) }}"
-                   class="w-full h-full object-cover"
-                   onerror="this.src='https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop'">
-            </div>
+            <a href="{{ route('products.show', ['product'=>$p->slug]) }}" class="h-44 bg-gray-100 block overflow-hidden">
+              <img src="{{ $img }}" alt="{{ e(data_get($p,'name') ?? data_get($p,'title','Produk')) }}"
+                   class="w-full h-full object-cover hover:scale-105 transition"
+                   onerror="this.src='https://via.placeholder.com/600x400'">
+            </a>
 
-            <div class="p-4">
+            <div class="p-4 flex-1 flex flex-col">
               @php
-                $title = data_get($p,'name') ?? data_get($p,'title','Product');
+                $title = data_get($p,'name') ?? data_get($p,'title','Produk');
                 $desc  = data_get($p,'short_description') ?? data_get($p,'description');
                 $price = (float) data_get($p,'price',0);
                 $cmp   = data_get($p,'compare_at_price');
                 $eco   = data_get($p,'eco_score');
               @endphp
 
-              <h3 class="font-semibold text-slate-900 line-clamp-2">{{ \Illuminate\Support\Str::limit($title, 80) }}</h3>
+              <a href="{{ route('products.show', ['product'=>$p->slug]) }}" class="font-semibold text-gray-900 hover:text-emerald-800 line-clamp-2">{{ \Illuminate\Support\Str::limit($title, 80) }}</a>
               @if($desc)
-                <p class="text-slate-500 text-sm mt-1 line-clamp-2">{{ $desc }}</p>
+                <p class="text-gray-600 text-sm mt-1 line-clamp-2">{{ $desc }}</p>
               @endif
 
-              <div class="flex items-center gap-2 text-slate-600 text-sm mt-2">
+              <div class="flex items-center gap-2 text-gray-600 text-sm mt-2">
                 @if(!is_null($eco))
-                  <span>🍃 Eco Score: {{ number_format((float)$eco,1) }}/10</span>
+                  <span>🍃 Skor Eco: {{ number_format((float)$eco,1) }}/10</span>
                 @endif
               </div>
 
               <div class="flex items-center justify-between mt-3">
-                <div class="text-lg font-semibold text-slate-900">
-                  ${{ number_format($price, 2) }}
+                <div class="text-lg font-semibold text-gray-900">
+                  Rp {{ number_format($price, 0, ',', '.') }}
                 </div>
                 @if(!is_null($cmp))
-                  <div class="text-slate-400 line-through text-sm">
-                    ${{ number_format((float)$cmp, 2) }}
+                  <div class="text-gray-400 line-through text-sm">
+                    Rp {{ number_format((float)$cmp, 0, ',', '.') }}
                   </div>
                 @endif
               </div>
 
-              <div class="mt-4 space-y-2">
-                {{-- Add single to cart --}}
+              <div class="mt-4 grid grid-cols-1 gap-2">
+                {{-- Tambah satuan ke keranjang --}}
                 <form action="{{ route('cart.store') }}" method="POST" class="contents">
                   @csrf
                   <input type="hidden" name="product_id" value="{{ $p->id }}">
                   <input type="hidden" name="quantity" value="1">
                   <button type="submit"
-                    class="w-full inline-flex justify-center px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800">
-                    Add to Cart
+                    class="w-full inline-flex justify-center px-4 py-2 rounded-lg bg-emerald-700 text-white font-semibold hover:bg-emerald-800">
+                    Tambah ke Keranjang
                   </button>
                 </form>
 
-                {{-- Remove single from wishlist (pakai bulk-remove dengan 1 id) --}}
-                <form action="{{ route('wishlist.bulk-remove') }}" method="POST" class="contents">
+                {{-- Hapus satuan dari wishlist (pakai bulk-remove dengan 1 id) --}}
+                <form action="{{ route('wishlist.bulk-remove') }}" method="POST" class="contents" onsubmit="return confirm('Hapus produk ini dari wishlist?')">
                   @csrf
                   @method('DELETE')
                   <input type="hidden" name="ids[]" value="{{ $p->id }}">
                   <button type="submit"
-                    class="w-full inline-flex justify-center px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">
-                    Remove from Wishlist
+                    class="w-full inline-flex justify-center px-4 py-2 rounded-lg border hover:bg-gray-50">
+                    Hapus dari Wishlist
                   </button>
                 </form>
               </div>
@@ -194,7 +194,7 @@
   function syncForms() {
     const ids = selectedIds();
 
-    // Hapus input hidden lama
+    // Bersihkan input hidden lama
     [bulkAddForm, bulkRemoveForm].forEach(form => {
       Array.from(form.querySelectorAll('input[name="ids[]"]')).forEach(el => el.remove());
     });
@@ -212,7 +212,7 @@
 
     setBulkEnabled(ids.length > 0);
 
-    // Set indeterminate state untuk selectAll
+    // State indeterminate untuk Select All
     if (selectAll) {
       const total = rowChecks().length;
       const selected = ids.length;
