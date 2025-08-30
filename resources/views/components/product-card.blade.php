@@ -1,30 +1,57 @@
 {{-- resources/views/components/product-card.blade.php --}}
-@props(['product' => null])
+@props(['product' => null, 'showActions' => true])
 
 @php
-  $id    = data_get($product, 'id');
-  $slug  = data_get($product, 'slug');
-  $name  = data_get($product, 'name') ?? data_get($product, 'title', 'Product');
-  $cat   = data_get($product, 'category.name') ?? data_get($product, 'category');
-  $price = (float) data_get($product, 'price', 0);
-  $img   = data_get($product, 'image')
-         ?? data_get($product, 'image_url')
-         ?? 'https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop';
-  $badge = $cat ? \Illuminate\Support\Str::limit($cat, 12) : 'Eco';
+  use Illuminate\Support\Facades\Route as R;
+  use Illuminate\Support\Str;
 
-  $detailUrl = $slug
-      ? (Route::has('products.show') ? route('products.show', $slug) : url('/products/'.$slug))
-      : url('/products/'.$id);
+  $id       = data_get($product, 'id');
+  $slug     = data_get($product, 'slug');
+  $name     = data_get($product, 'name') ?? data_get($product, 'title', 'Produk');
+  $cat      = data_get($product, 'category.name') ?? data_get($product, 'category');
+  $price    = (float) data_get($product, 'price', 0);
+  $compare  = (float) data_get($product, 'compare_at_price', 0);  // harga coret (opsional)
+  $stock    = data_get($product, 'stock');                        // opsional
 
+  $img   = data_get($product,'image')
+        ?? data_get($product,'image_url')
+        ?? 'https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop';
+
+  $badge = $cat ? Str::limit($cat, 14) : 'Eco';
+
+  // URL detail produk (aman untuk berbagai nama route)
+  if ($slug) {
+    $detailUrl = R::has('product.show')  ? route('product.show', $slug)
+               : (R::has('products.show') ? route('products.show', $slug) : url('/products/'.$slug));
+  } elseif ($id) {
+    $detailUrl = R::has('product.show')  ? route('product.show', $id)
+               : (R::has('products.show') ? route('products.show', $id) : url('/products/'.$id));
+  } else {
+    $detailUrl = url('/products');
+  }
+
+  // Route aksi
+  $cartStoreUrl       = R::has('cart.store') ? route('cart.store') : null;
+  $wishlistToggleUrl  = ($id && R::has('wishlist.toggle')) ? route('wishlist.toggle', $id) : null;
+
+  // Status wishlist (jika relasi ada)
   $inWishlist = auth()->check() && $id
-      ? auth()->user()->wishlists()->where('product_id',$id)->exists()
+      ? (method_exists(auth()->user(),'wishlists')
+          ? auth()->user()->wishlists()->where('product_id',$id)->exists()
+          : false)
       : false;
+
+  // Format harga Rupiah
+  $fmt = fn($n) => 'Rp '.number_format((float)$n, 0, ',', '.');
+
+  // Diskon
+  $hasDiscount = $compare > $price && $price > 0;
+  $discPercent = $hasDiscount ? max(0, round((1 - ($price / $compare)) * 100)) : 0;
 @endphp
 
-<div class="relative bg-white border rounded-xl shadow-sm hover:shadow-md transition overflow-hidden group">
-
-  {{-- Stretched link agar 1 kartu bisa diklik ke detail --}}
-  <a href="{{ $detailUrl }}" class="absolute inset-0 z-[1]" aria-label="Open {{ $name }}"></a>
+<div class="relative bg-white border rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden group">
+  {{-- Link seluruh kartu --}}
+  <a href="{{ $detailUrl }}" class="absolute inset-0 z-[1]" aria-label="Buka {{ $name }}"></a>
 
   {{-- Gambar --}}
   <div class="relative bg-gray-100 aspect-[4/3]">
@@ -35,29 +62,43 @@
       class="object-cover w-full h-full"
       onerror="this.src='https://images.unsplash.com/photo-1519744792095-2f2205e87b6f?q=80&w=800&auto=format&fit=crop'">
 
-    {{-- Badge kategori --}}
-    <span class="absolute top-2 left-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded pointer-events-none z-[2]">
-      {{ $badge }}
-    </span>
+    {{-- Badge kiri atas --}}
+    <div class="absolute top-2 left-2 flex flex-col gap-1 z-[2]">
+      <span class="inline-flex items-center rounded-full bg-white/90 border border-emerald-100 px-2.5 py-1 text-[11px] font-medium text-emerald-700">
+        {{ $badge }}
+      </span>
+      @if($hasDiscount)
+        <span class="inline-flex items-center rounded-full bg-amber-600 text-white px-2.5 py-0.5 text-[11px] font-semibold">
+          -{{ $discPercent }}%
+        </span>
+      @endif
+      @if(isset($stock) && (int)$stock <= 0)
+        <span class="inline-flex items-center rounded-full bg-gray-800 text-white px-2.5 py-0.5 text-[11px] font-semibold">
+          Habis
+        </span>
+      @endif
+    </div>
 
     {{-- Tombol wishlist --}}
     @if($id)
+      @php $wlDisabled = !$wishlistToggleUrl && !auth()->check(); @endphp
       <button
         type="button"
-        class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow hover:scale-105 transition z-[2] wishlist-btn"
-        aria-label="{{ $inWishlist ? 'Remove from wishlist' : 'Add to wishlist' }}"
+        class="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow hover:scale-105 transition z-[2]"
+        aria-label="{{ $inWishlist ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist' }}"
         data-wishlist-button
         data-product-id="{{ $id }}"
-        data-url="{{ route('wishlist.toggle', $id) }}"
+        data-url="{{ $wishlistToggleUrl }}"
         aria-pressed="{{ $inWishlist ? 'true' : 'false' }}"
-        onclick="event.stopPropagation(); event.preventDefault(); handleWishlistToggle(this)"
+        onclick="event.stopPropagation(); event.preventDefault(); ecoWishlistToggle(this)"
+        @if($wlDisabled) disabled title="Masuk untuk menambahkan ke wishlist" @endif
       >
         <svg
-          class="w-5 h-5 transition {{ $inWishlist ? 'text-red-500' : 'text-gray-600' }}"
+          class="w-5 h-5 transition {{ $inWishlist ? 'text-pink-600' : 'text-gray-600' }}"
           fill="{{ $inWishlist ? 'currentColor' : 'none' }}"
           stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/>
         </svg>
       </button>
     @endif
@@ -66,84 +107,96 @@
   {{-- Body --}}
   <div class="p-4 relative z-[2]">
     <h3 class="font-semibold text-base line-clamp-2">
-      <a href="{{ $detailUrl }}" class="hover:underline">{{ \Illuminate\Support\Str::limit($name, 80) }}</a>
+      <a href="{{ $detailUrl }}" class="hover:underline">{{ Str::limit($name, 80) }}</a>
     </h3>
     @if($cat)
-      <p class="text-gray-500 text-sm">{{ $cat }}</p>
-    @endif
+      <p class="text-gray-500 text-sm mt-0.5">{{ $cat }}</p>
+    @endif>
 
-    <div class="flex items-center justify-between mt-3">
-      <span class="font-bold text-slate-900">${{ number_format($price, 2) }}</span>
+    {{-- Harga + Aksi --}}
+    <div class="flex items-end justify-between mt-3">
+      <div class="flex flex-col">
+        <span class="font-bold text-emerald-800 text-lg">{{ $fmt($price) }}</span>
+        @if($hasDiscount)
+          <span class="text-xs text-gray-500 line-through">{{ $fmt($compare) }}</span>
+        @endif
+      </div>
 
-      @if($id)
-        <form action="{{ route('cart.store') }}" method="POST" class="contents" onsubmit="event.stopPropagation();">
-          @csrf
-          <input type="hidden" name="product_id" value="{{ $id }}">
-          <button type="submit"
-                  class="bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700">
-            Add to Cart
-          </button>
-        </form>
-      @else
-        <button type="button" disabled
-                class="bg-gray-300 text-gray-600 px-3 py-1.5 rounded-md text-sm cursor-not-allowed">
-          Add to Cart
-        </button>
+      @if($showActions)
+        @if($id && $cartStoreUrl && (!isset($stock) || (int)$stock > 0))
+          <form action="{{ $cartStoreUrl }}" method="POST" class="contents" onsubmit="event.stopPropagation();">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $id }}">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-white text-sm hover:bg-emerald-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2m1.6 8h9l3-8H6.4M7 13l-1.6-8M7 13L4 16m13 1a2 2 0 100 4 2 2 0 000-4m-8 2a2 2 0 11-4 0 2 2 0 014 0"/>
+              </svg>
+              Tambah ke Keranjang
+            </button>
+          </form>
+        @elseif(isset($stock) && (int)$stock <= 0)
+          <span class="inline-flex items-center rounded-xl bg-gray-200 px-3 py-2 text-gray-600 text-sm select-none">Stok Habis</span>
+        @else
+          <a href="{{ url('/cart') }}"
+             class="inline-flex items-center rounded-xl bg-gray-300 px-3 py-2 text-gray-600 text-sm cursor-not-allowed pointer-events-none"
+             aria-disabled="true">
+            Tambah ke Keranjang
+          </a>
+        @endif
       @endif
     </div>
   </div>
 </div>
 
-{{-- Handler JS untuk toggle wishlist --}}
 @push('scripts')
 <script>
-async function handleWishlistToggle(btn) {
-  const url = btn.dataset.url;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-      'Accept': 'application/json'
-    }
-  });
+/* Toggle wishlist – vanilla JS */
+window.ecoWishlistToggle = async function (btn) {
+  const url = btn?.dataset?.url;
+  const pid = btn?.dataset?.productId;
+  if (!url) { console.warn('Wishlist toggle URL tidak tersedia.'); return; }
 
-  if (!res.ok) {
-    console.error('Wishlist toggle failed', res.status);
-    return;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      },
+      credentials: 'same-origin'
+    });
+
+    if (!res.ok) { console.error('Gagal toggle wishlist', res.status); return; }
+    const data = await res.json();
+    const added = (data?.state === 'added') || !!data?.added;
+
+    // Sinkronkan semua tombol di halaman untuk produk yg sama
+    document.querySelectorAll(`[data-wishlist-button][data-product-id="${pid}"]`).forEach(el => {
+      const svg = el.querySelector('svg');
+      if (!svg) return;
+      svg.classList.toggle('text-pink-600', added);
+      svg.classList.toggle('text-gray-600', !added);
+      svg.setAttribute('fill', added ? 'currentColor' : 'none');
+      el.setAttribute('aria-pressed', added ? 'true' : 'false');
+      el.setAttribute('aria-label', added ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist');
+    });
+
+    // Update badge navbar bila fungsi global tersedia
+    const wlCount = Number(data?.wishlist_count ?? 0);
+    if (typeof window.updateWishlistBadge === 'function') {
+      window.updateWishlistBadge(wlCount);
+    } else {
+      const wlBadge = document.getElementById('wishlist-badge');
+      if (wlBadge) {
+        wlBadge.textContent = wlCount;
+        wlBadge.style.display = wlCount > 0 ? 'inline-flex' : 'none';
+      }
+    }
+  } catch (e) {
+    console.error('Error wishlist:', e);
   }
-  const data = await res.json();
-
-  if (data.ok) {
-    const svg = btn.querySelector('svg');
-    const added = data.state === 'added';
-
-    svg.classList.toggle('text-red-500', added);
-    svg.classList.toggle('text-gray-600', !added);
-    svg.setAttribute('fill', added ? 'currentColor' : 'none');
-    btn.setAttribute('aria-pressed', added ? 'true' : 'false');
-
-    // update badge navbar
-    const favHeart = document.getElementById('nav-fav-heart');
-    const wlBadge  = document.getElementById('wishlist-badge');
-    const wlCount  = Number(data?.wishlist_count ?? 0);
-    const hasAny   = wlCount > 0;
-
-    if (favHeart) {
-      favHeart.classList.toggle('text-red-600', hasAny);
-      favHeart.classList.toggle('text-gray-500', !hasAny);
-      favHeart.setAttribute('fill', hasAny ? 'currentColor' : 'none');
-    }
-    if (wlBadge) {
-      wlBadge.textContent = wlCount;
-      wlBadge.classList.toggle('hidden', !hasAny);
-    }
-
-    const cartBadge = document.getElementById('cart-badge');
-    if (cartBadge && typeof data?.badge_total === 'number') {
-      cartBadge.textContent = data.badge_total;
-      cartBadge.dataset.wishlistCount = String(wlCount);
-    }
-  }
-}
+};
 </script>
 @endpush

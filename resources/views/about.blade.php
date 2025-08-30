@@ -1,216 +1,140 @@
-{{-- resources/views/about.blade.php --}}
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>About — EcoMart</title>
+{{-- resources/views/components/footer.blade.php --}}
+@php
+  use Illuminate\Support\Facades\Route as R;
 
-  <!-- Fonts & Tailwind (fallback tanpa Vite) -->
-  <link rel="preconnect" href="https://fonts.bunny.net" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
+  // Safe URLs (gunakan fallback jika route tidak ada)
+  $home          = R::has('home') ? route('home') : url('/');
+  $about         = R::has('about') ? route('about') : $home;
+  $products      = R::has('product.index') ? route('product.index') : $home;
+  $adminPanel    = (auth()->check() && method_exists(auth()->user(),'isAdmin') && auth()->user()->isAdmin() && R::has('admin.dashboard'))
+                   ? route('admin.dashboard') : null;
 
-  <style>
-    html{ scroll-behavior:smooth; }
-    /* Minimal fallback agar konsisten dengan landing page */
-    @import url('https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap');
-    html,body{font-family:Figtree,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#F9FAFB;color:#0F172A;}
-    .container{max-width:1400px;margin:auto;padding:.5rem}
-    .grid{display:grid;gap:1rem}
-    .columns-2{grid-template-columns:1fr 1fr}
-    .columns-3{grid-template-columns:repeat(3,1fr)}
-    .columns-4{grid-template-columns:repeat(4,1fr)}
-    .card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:1rem}
-    .muted{color:#6B7280}
-    .badge{display:inline-flex;align-items:center;gap:.5rem;border:1px solid #E5E7EB;border-radius:999px;padding:.35rem .7rem;font-size:.85rem}
-    a.button{display:inline-block;padding:.6rem 1rem;border-radius:10px;text-decoration:none}
-    a.primary{background:#0F172A;color:#fff}
-    a.ghost{border:1px solid #E5E7EB;color:#0F172A}
-  </style>
-</head>
+  // Footer policy/help (pakai About sebagai fallback)
+  $privacy       = R::has('privacy') ? route('privacy') : $about;
+  $terms         = R::has('terms') ? route('terms') : $about;
+  $faq           = R::has('faq') ? route('faq') : $about;            // <= FAQ -> About jika route faq tak ada
+  $returns       = R::has('returns') ? route('returns') : $about;
+  $shipping      = R::has('shipping') ? route('shipping') : $about;
 
-<body class="antialiased selection:bg-[#FF2D20] selection:text-white">
-  <x-navbar />
+  // Newsletter (jika route belum ada, form jadi dummy dan tidak submit)
+  $newsletter    = R::has('newsletter.subscribe') ? route('newsletter.subscribe') : null;
 
-  <div class="container">
+  $tahun = date('Y');
+@endphp
 
-    {{-- HERO ABOUT --}}
-    <header class="grid columns-2" style="gap:2rem;margin-top:3rem;margin-bottom:3rem">
+<footer class="mt-12 border-t bg-white">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+
+    {{-- Pita info --}}
+    <div class="py-4 text-center text-sm text-emerald-900/80 bg-emerald-50/60 border-x border-t border-emerald-100 rounded-b-none rounded-2xl">
+      🌱 Pengiriman ramah lingkungan & kemasan minim plastik untuk setiap pesanan.
+    </div>
+
+    {{-- Kolom --}}
+    <div class="py-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+
+      {{-- Brand --}}
       <div>
-        <h1 style="font-size:3rem;line-height:1.1;font-weight:700">Tentang EcoMart</h1>
-        <p class="muted" style="margin-top:.75rem;max-width:55ch">
-          Kami adalah marketplace berkelanjutan yang membantu Anda berbelanja produk ramah lingkungan tanpa kompromi pada kualitas dan gaya hidup.
-          Misi kami sederhana: <strong>Shop Sustainable, Live Better</strong>.
+        <a href="{{ $home }}" class="flex items-center gap-2">
+          <img src="{{ asset('images/logoEcomart.png') }}" alt="EcoMart" class="h-9 w-9">
+          <span class="font-semibold text-emerald-900 text-xl">EcoMart</span>
+        </a>
+        <p class="mt-3 text-sm leading-6 text-gray-600">
+          Toko berkelanjutan untuk kebutuhan harian: dari alat rumah tangga, mode berkelanjutan,
+          hingga produk zero-waste. Beli bijak, rawat bumi.
         </p>
-        <div style="margin-top:1rem;display:flex;gap:.75rem;flex-wrap:wrap">
-          <span class="badge">♻️ Emisi < 1% per pesanan</span>
-          <span class="badge">🌱 100% kemasan daur ulang</span>
-          <span class="badge">🤝 Fair trade partners</span>
-        </div>
-        <div style="margin-top:1.25rem;display:flex;gap:.75rem;flex-wrap:wrap">
-          <a href="{{ route('home') }}" class="button primary">Mulai Belanja</a>
-          <a href="#values" class="button ghost">Nilai Kami</a>
+
+        {{-- Sosial --}}
+        <div class="mt-4 flex items-center gap-3 text-gray-500">
+          <a href="#" aria-label="Instagram" class="hover:text-emerald-700 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3h10zM12 7a5 5 0 100 10 5 5 0 000-10zm5.5 1.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+          </a>
+          <a href="#" aria-label="X / Twitter" class="hover:text-emerald-700 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22 5.8l-6.6 12.2H13l2.5-4.6-4.5-7.6h3l3 5.3 2.8-5.3H22zM9.7 6.7L2 18.2h3.1l2.1-3.5h3.4l1.1-1.9H8.3l3-5.1H9.7z"/></svg>
+          </a>
+          <a href="#" aria-label="YouTube" class="hover:text-emerald-700 transition">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3.1 3.1 0 00-2.2-2.2C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.3.5A3.1 3.1 0 00.5 6.2 32.8 32.8 0 000 12a32.8 32.8 0 00.5 5.8 3.1 3.1 0 002.2 2.2c1.8.5 9.3.5 9.3.5s7.5 0 9.3-.5a3.1 3.1 0 002.2-2.2c.4-1.8.5-3.8.5-5.8s0-4-.5-5.8zM9.8 15.3V8.7l6.2 3.3-6.2 3.3z"/></svg>
+          </a>
         </div>
       </div>
 
+      {{-- Navigasi --}}
       <div>
-        <div class="rounded-xl overflow-hidden border border-gray-200 bg-white h-[340px] flex items-center justify-center">
-          <img
-            src="https://images.unsplash.com/photo-1585386959984-a4155223168f?q=80&w=1200&auto=format&fit=crop"
-            alt="Eco-friendly packaging"
-            style="width:100%;height:100%;object-fit:cover;object-position:center" />
-        </div>
+        <h4 class="font-semibold text-gray-900 mb-3">Navigasi</h4>
+        <ul class="space-y-2 text-gray-600">
+          <li><a class="hover:text-emerald-700" href="{{ $home }}">Beranda</a></li>
+          <li><a class="hover:text-emerald-700" href="{{ $products }}">Produk</a></li>
+          <li><a class="hover:text-emerald-700" href="{{ $about }}">Tentang</a></li>
+          <li><a class="hover:text-emerald-700" href="#contact">Kontak</a></li>
+          @if($adminPanel)
+            <li><a class="hover:text-emerald-700" href="{{ $adminPanel }}">Admin Panel</a></li>
+          @endif
+        </ul>
       </div>
-    </header>
 
-    {{-- MISI & VISI --}}
-    <section id="mission" class="grid columns-2" style="gap:1rem;margin-bottom:2rem">
-      <div class="card">
-        <h3 class="text-xl font-semibold">Misi</h3>
-        <p class="muted mt-2">
-          Mempercepat transisi menuju konsumsi yang bertanggung jawab dengan kurasi produk ramah lingkungan yang terverifikasi.
+      {{-- Bantuan --}}
+      <div>
+        <h4 class="font-semibold text-gray-900 mb-3">Bantuan</h4>
+        <ul class="space-y-2 text-gray-600">
+          <li><a class="hover:text-emerald-700" href="{{ $faq }}">FAQ</a></li>                 {{-- FAQ -> About bila route faq tidak ada --}}
+          <li><a class="hover:text-emerald-700" href="{{ $terms }}">Syarat & Ketentuan</a></li>
+          <li><a class="hover:text-emerald-700" href="{{ $privacy }}">Kebijakan Privasi</a></li>
+          <li><a class="hover:text-emerald-700" href="{{ $returns }}">Kebijakan Pengembalian</a></li>
+          <li><a class="hover:text-emerald-700" href="{{ $shipping }}">Pengiriman</a></li>
+        </ul>
+      </div>
+
+      {{-- Newsletter --}}
+      <div>
+        <h4 class="font-semibold text-gray-900 mb-3">Berlangganan</h4>
+        <p class="text-sm text-gray-600">
+          Dapatkan penawaran & tips hidup berkelanjutan langsung di email kamu.
         </p>
-      </div>
-      <div class="card">
-        <h3 class="text-xl font-semibold">Visi</h3>
-        <p class="muted mt-2">
-          Menjadi platform rujukan gaya hidup berkelanjutan di Asia Tenggara dengan dampak nyata bagi manusia dan bumi.
-        </p>
-      </div>
-    </section>
 
-    {{-- DAMPAK / STATS --}}
-    <section class="bg-white border border-gray-200 rounded-xl p-6" style="margin-bottom:2rem">
-      <h3 class="text-2xl font-semibold text-center">Dampak Kami</h3>
-      <p class="muted text-center mt-1">Metirik yang kami pantau untuk memastikan keberlanjutan</p>
+        @if($newsletter)
+          <form action="{{ $newsletter }}" method="POST" class="mt-3 flex items-stretch gap-2">
+            @csrf
+            <input type="email" name="email" placeholder="Email kamu"
+                   class="w-full rounded-xl border-gray-300 focus:ring-emerald-600 focus:border-emerald-600" required>
+            <button class="rounded-xl bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800">
+              Langganan
+            </button>
+          </form>
+        @else
+          {{-- Fallback: tidak ada route -> form dummy yang tidak submit --}}
+          <form action="#" method="GET" class="mt-3 flex items-stretch gap-2" onsubmit="return false;">
+            <input type="email" placeholder="Email kamu"
+                   class="w-full rounded-xl border-gray-300 focus:ring-emerald-600 focus:border-emerald-600">
+            <button type="button" class="rounded-xl bg-emerald-700 px-4 py-2 text-white opacity-60 cursor-not-allowed">
+              Langganan
+            </button>
+          </form>
+        @endif
 
-      <div class="grid columns-4" style="gap:1rem;margin-top:1rem">
-        <div class="card text-center">
-          <div class="text-3xl font-bold">50k+</div>
-          <div class="muted">Pelanggan</div>
-        </div>
-        <div class="card text-center">
-          <div class="text-3xl font-bold">1M+</div>
-          <div class="muted">Produk Terkirim</div>
-        </div>
-        <div class="card text-center">
-          <div class="text-3xl font-bold">12k ton</div>
-          <div class="muted">CO₂e Dihemat</div>
-        </div>
-        <div class="card text-center">
-          <div class="text-3xl font-bold">95%</div>
-          <div class="muted">Kepuasan</div>
-        </div>
-      </div>
-    </section>
-
-    {{-- NILAI (VALUES) --}}
-    <section id="values" style="margin-bottom:2rem">
-      <h3 class="text-2xl font-semibold text-center">Nilai Inti</h3>
-      <p class="muted text-center mt-1">Pedoman kami dalam mengambil keputusan</p>
-
-      <div class="grid columns-3" style="gap:1rem;margin-top:1rem">
-        @php
-          $values = $values ?? [
-            ['title' => 'Transparansi', 'desc' => 'Label dampak yang jelas dan data sumber yang dapat diaudit.'],
-            ['title' => 'Kualitas', 'desc' => 'Produk dipilih melalui uji kualitas dan kelayakan penggunaan harian.'],
-            ['title' => 'Kolaborasi', 'desc' => 'Bekerja dengan UMKM dan brand lokal untuk memperluas dampak.'],
-            ['title' => 'Sirkularitas', 'desc' => 'Mengutamakan bahan daur ulang dan desain tahan lama.'],
-            ['title' => 'Etika', 'desc' => 'Standard fair wage dan supply chain yang bertanggung jawab.'],
-            ['title' => 'Edukasi', 'desc' => 'Konten tips & kebiasaan kecil yang berdampak besar.'],
-          ];
-        @endphp
-
-        @foreach($values as $v)
-          <div class="card">
-            <h4 class="font-semibold">{{ $v['title'] }}</h4>
-            <p class="muted mt-2">{{ $v['desc'] }}</p>
+        <div class="mt-5">
+          <p class="text-sm text-gray-600 mb-2">Pembayaran & Pengiriman:</p>
+          <div class="flex items-center gap-3">
+            <span class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs text-gray-600">Bank Transfer</span>
+            <span class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs text-gray-600">E-Wallet</span>
+            <span class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs text-gray-600">Kurir Hijau</span>
           </div>
-        @endforeach
-      </div>
-    </section>
-
-    {{-- TIMELINE SINGKAT --}}
-    <section style="margin-bottom:2rem">
-      <h3 class="text-2xl font-semibold text-center">Perjalanan Kami</h3>
-      <div class="mt-3 grid columns-3" style="gap:1rem">
-        <div class="card">
-          <div class="font-semibold">2023</div>
-          <p class="muted mt-1">Mulai dari katalog kecil 100 produk rumah tangga ramah lingkungan.</p>
-        </div>
-        <div class="card">
-          <div class="font-semibold">2024</div>
-          <p class="muted mt-1">Luncurkan label <em>Eco Score</em> dan program kemitraan brand lokal.</p>
-        </div>
-        <div class="card">
-          <div class="font-semibold">2025</div>
-          <p class="muted mt-1">Skala regional + fitur rekomendasi AI untuk belanja yang lebih cerdas.</p>
         </div>
       </div>
-    </section>
 
-    {{-- TEAM --}}
-    <section id="team" style="margin-bottom:2rem">
-      <h3 class="text-2xl font-semibold text-center">Tim Inti</h3>
-      <p class="muted text-center mt-1">Orang-orang di balik EcoMart</p>
+    </div>
 
-      @php
-        $team = $team ?? [
-          ['name'=>'Alya Putri','role'=>'CEO & Co-founder','avatar'=>'https://i.pravatar.cc/120?img=47'],
-          ['name'=>'Dimas Kurnia','role'=>'Head of Sustainability','avatar'=>'https://i.pravatar.cc/120?img=12'],
-          ['name'=>'Nadia Ramadhani','role'=>'Product Lead','avatar'=>'https://i.pravatar.cc/120?img=32'],
-        ];
-      @endphp
-
-      <div class="grid columns-3" style="gap:1rem;margin-top:1rem">
-        @forelse($team as $m)
-          <div class="card text-center">
-            <img src="{{ $m['avatar'] }}" alt="{{ $m['name'] }}" class="mx-auto rounded-full" style="width:80px;height:80px;object-fit:cover" />
-            <div class="font-semibold mt-2">{{ $m['name'] }}</div>
-            <div class="muted text-sm">{{ $m['role'] }}</div>
-          </div>
-        @empty
-          <div class="card">Belum ada data tim.</div>
-        @endforelse
+    {{-- Strip bawah --}}
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t py-5 text-sm text-gray-600">
+      <p>© {{ $tahun }} <span class="font-medium text-emerald-900">EcoMart</span>. Semua hak dilindungi.</p>
+      <div class="flex items-center gap-4">
+        <a href="{{ $privacy }}" class="hover:text-emerald-700">Privasi</a>
+        <a href="{{ $terms }}" class="hover:text-emerald-700">Ketentuan</a>
+        <a href="#top" class="inline-flex items-center gap-1 hover:text-emerald-700">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5l7 7-1.4 1.4L13 9.8V20h-2V9.8l-4.6 3.6L5 12z"/></svg>
+          Kembali ke atas
+        </a>
       </div>
-    </section>
-
-    {{-- FAQ --}}
-    <section id="faq" class="bg-white border border-gray-200 rounded-xl p-6" style="margin-bottom:2rem">
-      <h3 class="text-2xl font-semibold text-center">Pertanyaan Umum</h3>
-
-      @php
-        $faqs = $faqs ?? [
-          ['q'=>'Apa itu Eco Score?','a'=>'Penilaian sederhana (0–100) yang merangkum dampak lingkungan produk berdasarkan bahan, proses produksi, dan kemasan.'],
-          ['q'=>'Bagaimana kurasi produk?','a'=>'Kami periksa sertifikasi (mis. FSC, GOTS), transparansi pemasok, dan uji kualitas internal.'],
-          ['q'=>'Apakah pengiriman ramah lingkungan?','a'=>'Kami menggunakan kemasan daur ulang dan mengimbangi jejak karbon pengiriman.'],
-        ];
-      @endphp
-
-      <div class="mt-3 grid columns-3" style="gap:1rem">
-        @foreach($faqs as $f)
-          <div class="card">
-            <div class="font-semibold">{{ $f['q'] }}</div>
-            <p class="muted mt-2">{{ $f['a'] }}</p>
-          </div>
-        @endforeach
-      </div>
-    </section>
-
-    {{-- CTA KONTAK --}}
-    <section id="contact" class="card text-center" style="margin-bottom:3rem">
-      <h3 class="text-xl font-semibold">Ingin bermitra atau punya saran?</h3>
-      <p class="muted mt-1">Kami terbuka untuk kolaborasi brand dan program komunitas.</p>
-      <div class="mt-3 flex items-center justify-center gap-2 flex-wrap">
-        <a href="mailto:hello@ecomart.local" class="button primary">Hubungi Kami</a>
-        <a href="{{ route('home') }}#assistant" class="button ghost">Tanya Asisten</a>
-      </div>
-    </section>
+    </div>
 
   </div>
-
-  <x-footer />
-</body>
-</html>
+</footer>
