@@ -1,165 +1,116 @@
 @extends('admin.layout')
 
-@section('title', 'Product Management')
-
-@section('header-title', 'Product Management')
-@section('header-subtitle', 'Manage your product inventory')
+@section('title','Manajemen Produk')
+@section('header-title','Manajemen Produk')
+@section('header-subtitle','Kelola persediaan produk Anda')
 
 @section('header-button')
-<a href="#" class="bg-gray-800 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-900 font-medium">+ Add Product</a>
+  @if(Route::has('admin.products.create'))
+    <a href="{{ route('admin.products.create') }}"
+       class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm px-4 py-2 rounded-xl shadow font-medium">+ Tambah Produk</a>
+  @endif
 @endsection
 
 @section('content')
-  {{-- ===== Add New Product ===== --}}
-  <div class="bg-white border border-gray-200 rounded-lg mb-8">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <div class="text-lg font-semibold text-gray-800">Add New Product</div>
-    </div>
-
-    <form action="#" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
-      @csrf
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-          <input class="w-full h-10 border border-gray-300 rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" type="text" name="name" placeholder="Enter product name">
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-          <input class="w-full h-10 border border-gray-300 rounded-md px-3 text-sm bg-gray-50 text-gray-500" type="text" name="slug" value="product-slug" readonly>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-          <select class="w-full h-10 border border-gray-300 rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" name="category">
-            <option value="">Select category</option>
-            <option>Electronics</option>
-            <option>Sports</option>
-            <option>Fashion</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Price</label>
-          <input class="w-full h-10 border border-gray-300 rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400" type="number" step="0.01" name="price" placeholder="0.00">
-        </div>
-      </div>
-
+  {{-- Kartu tambah cepat (opsional) --}}
+  <div class="bg-white border border-slate-200 rounded-xl shadow-sm mb-6">
+    <div class="px-5 py-4 flex items-center justify-between">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-        <div class="h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-center">
-          <div>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-            <p class="text-sm text-gray-500">Click to upload or drag and drop</p>
-            <p class="text-xs text-gray-400 mt-0.5">PNG, JPG up to 10MB</p>
-          </div>
-        </div>
-        <input type="file" class="hidden" name="image">
+        <div class="text-[15px] font-semibold text-slate-800">Tambah Produk Baru</div>
+        <div class="text-xs text-slate-500">Tambah item baru ke katalog Anda dengan cepat</div>
       </div>
-
-      <div class="flex items-center gap-3">
-        <button type="submit" class="px-4 h-9 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-900 font-medium">Save Product</button>
-        <button type="reset" class="px-4 h-9 bg-white border border-gray-300 text-sm rounded-md text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-      </div>
-    </form>
+      @if(Route::has('admin.products.create'))
+        <a href="{{ route('admin.products.create') }}" class="text-emerald-700 hover:underline font-medium">Mulai</a>
+      @endif
+    </div>
   </div>
 
-  {{-- ===== Products List ===== --}}
-  <div class="bg-white border border-gray-200 rounded-lg">
-    <div class="px-6 py-4 flex items-center justify-between border-b">
-      <h3 class="text-lg font-semibold text-gray-800">Products List</h3>
-      <div class="flex items-center gap-2">
+  {{-- Daftar Produk --}}
+  <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+    <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+      <h3 class="font-semibold text-slate-800 text-lg">Daftar Produk</h3>
+      <form method="GET" class="flex items-center gap-2">
         <div class="relative">
-          <input type="text" placeholder="Search products..." class="w-64 h-9 border border-gray-300 rounded-md pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 absolute left-3 top-2 text-gray-400" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+          <input type="text" name="q" value="{{ request('q') }}" placeholder="Cari produk…"
+                 class="peer h-10 w-56 md:w-72 rounded-lg border border-slate-300 bg-white px-3 pr-9 text-sm text-slate-700 placeholder:text-slate-400
+                        focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"/>
+          <svg xmlns="http://www.w3.org/2000/svg"
+               class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 peer-focus:text-emerald-500"
+               viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"
+                  d="m21 21-4.3-4.3m1.8-4.7a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/>
+          </svg>
         </div>
-        <button class="w-9 h-9 border border-gray-300 rounded-md flex items-center justify-center hover:bg-gray-50">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-        </button>
-      </div>
+        <button class="h-10 px-4 rounded-lg border border-emerald-500 text-emerald-600 text-sm font-medium hover:bg-emerald-50">Cari</button>
+      </form>
     </div>
 
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+        <thead class="bg-slate-50 text-slate-600">
           <tr>
-            <th class="px-6 py-3 text-left font-medium">Product</th>
-            <th class="px-6 py-3 text-left font-medium">Category</th>
-            <th class="px-6 py-3 text-left font-medium">Price</th>
-            <th class="px-6 py-3 text-left font-medium">Status</th>
-            <th class="px-6 py-3 text-left font-medium">Actions</th>
+            <th class="text-left px-5 py-3 font-semibold">Produk</th>
+            <th class="text-left px-5 py-3 font-semibold">Kategori</th>
+            <th class="text-left px-5 py-3 font-semibold">Harga</th>
+            <th class="text-left px-5 py-3 font-semibold">Stok</th>
+            <th class="text-left px-5 py-3 font-semibold">Gambar</th>
+            <th class="text-left px-5 py-3 font-semibold">Aksi</th>
           </tr>
         </thead>
-        <tbody class="bg-white text-sm divide-y divide-gray-200">
-          <tr>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-500">IMG</div>
-                <div>
-                  <div class="text-gray-900 font-medium">Wireless Headphones</div>
-                  <div class="text-xs text-gray-500">wireless-headphones</div>
+        <tbody class="divide-y divide-slate-100">
+          @forelse($products as $p)
+            <tr class="hover:bg-slate-50/60">
+              <td class="px-5 py-3">
+                <div class="font-medium text-slate-900">{{ $p->name }}</div>
+                <div class="text-slate-500 text-xs">{{ $p->slug }}</div>
+              </td>
+              <td class="px-5 py-3">
+                <span class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-700">
+                  {{ $p->category->name ?? '—' }}
+                </span>
+              </td>
+              <td class="px-5 py-3 font-semibold text-slate-900">
+                {{ function_exists('format_rupiah') ? format_rupiah($p->price) : 'Rp'.number_format($p->price,0,',','.') }}
+              </td>
+              <td class="px-5 py-3">
+                <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                  {{ $p->stock ?? 0 }}
+                </span>
+              </td>
+              <td class="px-5 py-3">
+                @if($p->image)
+                  <img src="{{ Str::startsWith($p->image,['http','https']) ? $p->image : asset('storage/'.$p->image) }}" alt="{{ $p->name }}"
+                       class="w-12 h-12 object-cover rounded-lg border border-slate-200">
+                @else
+                  <span class="text-slate-400">Tidak ada gambar</span>
+                @endif
+              </td>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-2">
+                  @if(Route::has('admin.products.edit'))
+                    <a href="{{ route('admin.products.edit',$p) }}"
+                       class="inline-flex items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Ubah</a>
+                  @endif
+                  @if(Route::has('admin.products.destroy'))
+                    <form action="{{ route('admin.products.destroy',$p) }}" method="POST" onsubmit="return confirm('Hapus produk ini?')">
+                      @csrf @method('DELETE')
+                      <button class="inline-flex items-center rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">Hapus</button>
+                    </form>
+                  @endif
                 </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 text-gray-600">Electronics</td>
-            <td class="px-6 py-4 text-gray-600">$99.99</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span></td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-4 text-gray-500">
-                <a href="#" class="hover:text-gray-900"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></a>
-                <a href="#" class="hover:text-red-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></a>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-500">IMG</div>
-                <div>
-                  <div class="text-gray-900 font-medium">Smart Watch</div>
-                  <div class="text-xs text-gray-500">smart-watch</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 text-gray-600">Electronics</td>
-            <td class="px-6 py-4 text-gray-600">$298.99</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span></td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-4 text-gray-500">
-                <a href="#" class="hover:text-gray-900"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></a>
-                <a href="#" class="hover:text-red-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></a>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center text-xs text-gray-500">IMG</div>
-                <div>
-                  <div class="text-gray-900 font-medium">Running Shoes</div>
-                  <div class="text-xs text-gray-500">running-shoes</div>
-                </div>
-              </div>
-            </td>
-            <td class="px-6 py-4 text-gray-600">Sports</td>
-            <td class="px-6 py-4 text-gray-600">$129.99</td>
-            <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Draft</span></td>
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-4 text-gray-500">
-                <a href="#" class="hover:text-gray-900"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></a>
-                <a href="#" class="hover:text-red-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></a>
-              </div>
-            </td>
-          </tr>
+              </td>
+            </tr>
+          @empty
+            <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">Produk tidak ditemukan.</td></tr>
+          @endforelse
         </tbody>
       </table>
-
-      {{-- Pagination --}}
-      <div class="flex items-center justify-between px-6 py-3 bg-white border-t text-sm text-gray-600">
-        <div>Showing 1 to 3 of 3 results</div>
-        <div class="flex items-center gap-2">
-          <button class="px-3 h-8 bg-white border border-gray-300 rounded-md text-gray-500 cursor-not-allowed text-xs">Previous</button>
-          <span class="w-8 h-8 flex items-center justify-center text-white bg-gray-800 text-xs rounded-md">1</span>
-          <button class="px-3 h-8 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-xs">Next</button>
-        </div>
-      </div>
     </div>
+
+    @if($products instanceof \Illuminate\Contracts\Pagination\Paginator && $products->hasPages())
+      <div class="px-5 py-3 border-t border-slate-200">
+        {{ $products->withQueryString()->links() }}
+      </div>
+    @endif
   </div>
 @endsection
