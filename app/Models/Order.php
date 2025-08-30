@@ -15,6 +15,10 @@ class Order extends Model
         'payment_method',   // bank_transfer|ewallet|cod (string)
     ];
 
+    public function user()
+{
+    return $this->belongsTo(\App\Models\User::class);
+}
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
